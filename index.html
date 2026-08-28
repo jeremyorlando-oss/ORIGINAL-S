@@ -331,7 +331,6 @@
     <nav class="tabs">
       <button data-tab="dashboard" class="active">Tableau de bord</button>
       <button data-tab="journal">Journal</button>
-      <button data-tab="scan">Scanner</button>
       <button data-tab="remb">Remboursements</button>
       <button data-tab="contrats">Contrats</button>
       <button data-tab="stocks">Stocks</button>
@@ -417,45 +416,6 @@
       <div class="empty" id="journal-empty" style="display:none;">Aucune écriture pour l'instant. Ajoute la première dépense ou recette ci-dessus.</div>
     </section>
 
-    <!-- ================= SCAN ================= -->
-    <section class="view" id="view-scan">
-      <h2 class="section-title"><span>Scanner une facture</span><span class="rule"></span></h2>
-      <div class="banner">Prends une photo nette de la facture ou du ticket. Claude lit le montant, la date et le fournisseur — tu valides avant l'enregistrement.</div>
-
-      <div class="scan-zone" id="scan-zone">
-        <div id="scan-placeholder">
-          <div style="font-size:38px;margin-bottom:10px;">📷</div>
-          <input type="file" accept="image/*" id="camera-input" style="display:none;">
-          <button class="btn btn-primary" id="btn-take-photo">Prendre une photo</button>
-        </div>
-        <div id="scan-preview" style="display:none;">
-          <img id="scan-img" src="">
-          <div class="scan-status" id="scan-status"></div>
-        </div>
-      </div>
-
-      <div class="card" id="scan-result-card" style="display:none;margin-top:14px;">
-        <h2 class="section-title" style="margin-top:0;"><span>Vérifie avant d'enregistrer</span></h2>
-        <div class="form-grid">
-          <div class="field"><label>Date</label><input type="date" id="s-date"></div>
-          <div class="field"><label>Événement (optionnel)</label><input type="text" id="s-event"></div>
-          <div class="field"><label>Catégorie</label><select id="s-cat"></select></div>
-          <div class="field"><label>Montant CHF</label><input type="number" step="0.01" id="s-montant"></div>
-          <div class="field full"><label>Description</label><input type="text" id="s-desc"></div>
-          <div class="field"><label>Payé par</label>
-            <select id="s-payeur"><option>Quispe</option><option>Tschanz</option><option>Entreprise</option></select>
-          </div>
-          <div class="field"><label>Moyen de paiement</label>
-            <select id="s-moyen"><option>Cash</option><option>Carte</option></select>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-primary" id="btn-scan-save">Ajouter au journal</button>
-          <button class="btn btn-outline" id="btn-scan-reset">Reprendre une photo</button>
-        </div>
-      </div>
-    </section>
-
     <!-- ================= REMBOURSEMENTS ================= -->
     <section class="view" id="view-remb">
       <h2 class="section-title"><span>Résumé</span><span class="rule"></span></h2>
@@ -517,7 +477,7 @@
     <!-- ================= CONTRATS ================= -->
     <section class="view" id="view-contrats">
       <h2 class="section-title"><span>Générer un contrat</span><span class="rule"></span></h2>
-      <div class="banner">Choisis un modèle, remplis les champs, puis génère un PDF prêt à imprimer et signer.</div>
+      <div class="banner">Choisis un modèle, remplis les champs, puis génère le document — il s'ouvre dans un nouvel onglet, prêt à imprimer ou enregistrer en PDF (utilise "Enregistrer au format PDF" dans la fenêtre d'impression).</div>
 
       <div class="card">
         <label>Type de document</label>
@@ -543,6 +503,12 @@
 
     <!-- ================= STOCKS ================= -->
     <section class="view" id="view-stocks">
+
+      <div class="ticket" style="margin-bottom:20px;">
+        <div class="t-head"><span>Valeur du stock</span><span id="stock-value-date"></span></div>
+        <div class="t-row total"><span class="lbl">Valeur totale (stock × coût)</span><span class="val" id="stock-total-value">—</span></div>
+        <div class="t-foot">ORIGINAL'S COMPLETOS · CHE-273.472.459 · BUSSIGNY</div>
+      </div>
 
       <div class="toggle-add">
         <h2 class="section-title" style="margin:0;"><span>Ingrédients</span></h2>
@@ -656,8 +622,7 @@ const ACCESS_CODE = '646464';
    ============================================================ */
 async function checkAccessCode(){
   try{
-    const r = await window.storage.get('og-code-ok', false); // personnel, pas partagé
-    return r && r.value === 'true';
+    return localStorage.getItem('og-code-ok') === 'true'; // personnel, pas partagé
   }catch(e){ return false; }
 }
 document.getElementById('btn-code-submit').addEventListener('click', submitCode);
@@ -666,7 +631,7 @@ async function submitCode(){
   const val = document.getElementById('code-input').value.trim();
   const errEl = document.getElementById('code-error');
   if(val === ACCESS_CODE){
-    try{ await window.storage.set('og-code-ok', 'true', false); }catch(e){}
+    try{ localStorage.setItem('og-code-ok', 'true'); }catch(e){}
     document.getElementById('code-overlay').classList.add('hidden');
     startApp();
   } else {
@@ -680,13 +645,12 @@ async function submitCode(){
    ============================================================ */
 async function loadCurrentUser(){
   try{
-    const r = await window.storage.get('og-current-user', false); // personnel, pas partagé
-    return r && r.value ? r.value : null;
+    return localStorage.getItem('og-current-user'); // personnel, pas partagé
   }catch(e){ return null; }
 }
 async function setCurrentUser(name){
   currentUser = name;
-  try{ await window.storage.set('og-current-user', name, false); }catch(e){}
+  try{ localStorage.setItem('og-current-user', name); }catch(e){}
   document.getElementById('user-badge-name').textContent = name;
   document.getElementById('login-overlay').classList.add('hidden');
   // Pré-remplit "Payé par" avec la personne connectée
@@ -809,6 +773,26 @@ function buildSeedRecette(ingredients, produits){
     .map(r => withId({produitId: prodByName[r.produit], ingredientId: ingByName[r.ingredient], quantite: r.quantite}));
 }
 
+/* ============================================================
+   FIREBASE (stockage partagé — remplace window.storage hors de Claude)
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBc_HZfPZT7jQOi7O4lhxp72EY56vnojAk",
+  authDomain: "app-og-79027.firebaseapp.com",
+  projectId: "app-og-79027",
+  storageBucket: "app-og-79027.firebasestorage.app",
+  messagingSenderId: "204547040136",
+  appId: "1:204547040136:web:5e22fe1eaaa10284f0d03d"
+};
+let fsDb = null, fsFns = null;
+async function initFirebase(){
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const app = initializeApp(firebaseConfig);
+  fsDb = fsMod.getFirestore(app);
+  fsFns = fsMod;
+}
+
 async function loadAll(){
   state.journal = await loadKey('og-journal', SEED_JOURNAL.map(withId));
   state.ajustements = await loadKey('og-ajustements', []);
@@ -820,18 +804,25 @@ async function loadAll(){
 }
 async function loadKey(key, fallback){
   try{
-    const r = await window.storage.get(key, true);
-    if(r && r.value) return JSON.parse(r.value);
+    const ref = fsFns.doc(fsDb, 'ogdata', key);
+    const snap = await fsFns.getDoc(ref);
+    if(snap.exists() && snap.data().value) return JSON.parse(snap.data().value);
     return fallback;
-  }catch(e){ return fallback; }
+  }catch(e){
+    console.error('loadKey error for', key, ':', e);
+    return fallback;
+  }
 }
 async function saveKey(key, arr){
   setSaveStatus('Enregistrement…');
   try{
-    await window.storage.set(key, JSON.stringify(arr), true);
+    if(!fsDb || !fsFns) throw new Error('Firebase non initialisé (fsDb/fsFns manquant)');
+    const ref = fsFns.doc(fsDb, 'ogdata', key);
+    await fsFns.setDoc(ref, { value: JSON.stringify(arr) });
     setSaveStatus('Registre partagé — synchronisé');
   }catch(e){
-    setSaveStatus('Erreur de sauvegarde — réessaie');
+    console.error('saveKey error for', key, ':', e);
+    setSaveStatus('Erreur : ' + (e && e.message ? e.message : String(e)));
   }
 }
 function setSaveStatus(txt){ document.getElementById('save-status').textContent = txt; }
@@ -1006,98 +997,6 @@ function renderJournal(){
   });
 }
 
-/* ============================================================
-   SCAN DE FACTURE
-   ============================================================ */
-document.getElementById('btn-take-photo').addEventListener('click', ()=>{
-  document.getElementById('camera-input').click();
-});
-document.getElementById('camera-input').addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  document.getElementById('scan-placeholder').style.display='none';
-  document.getElementById('scan-preview').style.display='block';
-  document.getElementById('scan-result-card').style.display='none';
-  const imgEl = document.getElementById('scan-img');
-  const statusEl = document.getElementById('scan-status');
-  const reader = new FileReader();
-  reader.onload = async ()=>{
-    imgEl.src = reader.result;
-    const base64 = reader.result.split(',')[1];
-    statusEl.innerHTML = '<span class="spinner"></span>Lecture de la facture…';
-    try{
-      const extracted = await analyzeReceipt(base64, file.type);
-      statusEl.textContent = 'Lecture terminée — vérifie les champs ci-dessous.';
-      fillScanForm(extracted);
-      document.getElementById('scan-result-card').style.display='block';
-    }catch(err){
-      statusEl.textContent = "Impossible de lire automatiquement cette facture. Remplis les champs manuellement ci-dessous.";
-      fillScanForm({});
-      document.getElementById('scan-result-card').style.display='block';
-    }
-  };
-  reader.readAsDataURL(file);
-});
-
-async function analyzeReceipt(base64Data, mediaType){
-  const prompt = `Analyse cette photo de facture ou ticket de caisse suisse. Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour, sans balises markdown, avec exactement ces clés :
-{"date":"AAAA-MM-JJ","montant":0.00,"fournisseur":"nom du magasin/fournisseur","description":"achat en 3-4 mots","categorie":"une valeur parmi: Matières premières, Matériel, Location stand, Transport, Assurances, Divers"}
-Le montant est le TOTAL TTC payé, en nombre décimal (pas de texte, pas de symbole CHF). Si la date est illisible, mets la date du jour. Choisis la catégorie la plus logique selon l'achat.`;
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 500,
-      messages: [{
-        role:"user",
-        content:[
-          {type:"image", source:{type:"base64", media_type: mediaType||"image/jpeg", data: base64Data}},
-          {type:"text", text: prompt}
-        ]
-      }]
-    })
-  });
-  const data = await response.json();
-  const text = (data.content||[]).map(b=>b.text||'').join('');
-  const clean = text.replace(/```json|```/g,'').trim();
-  return JSON.parse(clean);
-}
-
-function fillScanForm(ex){
-  populateCatSelect(document.getElementById('s-cat'), 'Dépense');
-  document.getElementById('s-date').value = ex.date || new Date().toISOString().slice(0,10);
-  document.getElementById('s-event').value = '';
-  document.getElementById('s-montant').value = ex.montant || '';
-  document.getElementById('s-desc').value = [ex.fournisseur, ex.description].filter(Boolean).join(' - ');
-  if(ex.categorie && CAT_DEPENSES.includes(ex.categorie)) document.getElementById('s-cat').value = ex.categorie;
-}
-
-document.getElementById('btn-scan-reset').addEventListener('click', ()=>{
-  document.getElementById('scan-placeholder').style.display='block';
-  document.getElementById('scan-preview').style.display='none';
-  document.getElementById('scan-result-card').style.display='none';
-  document.getElementById('camera-input').value='';
-});
-
-document.getElementById('btn-scan-save').addEventListener('click', async ()=>{
-  const montant = parseFloat(document.getElementById('s-montant').value);
-  const date = document.getElementById('s-date').value;
-  if(!date || isNaN(montant)){ alert('Merci de renseigner au moins la date et le montant.'); return; }
-  const entry = withId({
-    date, event: document.getElementById('s-event').value.trim(),
-    type: 'Dépense', categorie: document.getElementById('s-cat').value,
-    description: document.getElementById('s-desc').value.trim(),
-    montant, payeur: document.getElementById('s-payeur').value,
-    moyen: document.getElementById('s-moyen').value,
-    saisiPar: currentUser || ''
-  });
-  state.journal.push(entry);
-  await saveKey('og-journal', state.journal);
-  document.getElementById('btn-scan-reset').click();
-  alert('Dépense ajoutée au journal.');
-  renderAll();
-});
 
 /* ============================================================
    REMBOURSEMENTS
@@ -1215,10 +1114,8 @@ function renderRemb(){
 }
 
 /* ============================================================
-   CONTRATS — génération PDF fidèle aux modèles
+   CONTRATS — génération HTML imprimable, fidèle aux modèles
    ============================================================ */
-const BRAND_RED = [161, 40, 60]; // bordeaux des tableaux d'en-tête
-const BRAND_RED_TEXT = [176, 42, 58];
 
 const CONTRAT_FIELDS = {
   cdd: [
@@ -1270,254 +1167,192 @@ function fmtDateFR(iso){
 }
 function getVal(id){ const el=document.getElementById('cf-'+id); return el?el.value:''; }
 
-/* ---------- Éléments graphiques communs ---------- */
-function drawWatermark(doc, pageW, pageH){
-  doc.saveGraphicsState();
-  doc.setGState(new doc.GState({opacity:0.06}));
-  doc.setTextColor(...BRAND_RED_TEXT);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(46);
-  doc.text("ORIGINAL'S COMPLETOS", pageW/2, pageH/2, {align:'center', angle:35});
-  doc.restoreGraphicsState();
-}
-function drawFooter(doc, pageW, pageH, pageNum, pageCount){
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(140);
-  const line = `${COMPANY.marque.toUpperCase()} · Bussigny, Suisse · ${COMPANY.tel} · ${COMPANY.email} — page ${pageNum} / ${pageCount}`;
-  doc.text(line, pageW/2, pageH-10, {align:'center'});
-  doc.setTextColor(0);
-}
-function drawHeaderTable(doc, y, rows, pageW){
-  const margin = 14, labelW = 42, valueW = pageW - margin*2 - labelW;
-  let cy = y;
-  doc.setFontSize(9.5);
-  rows.forEach(([label, value])=>{
-    const valLines = doc.splitTextToSize(value, valueW-6);
-    const rowH = Math.max(9, valLines.length*5+4);
-    doc.setFillColor(...BRAND_RED);
-    doc.rect(margin, cy, labelW, rowH, 'F');
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
-    doc.text(label, margin+3, cy+6);
-    doc.setDrawColor(220); doc.rect(margin+labelW, cy, valueW, rowH);
-    doc.setTextColor(20); doc.setFont('helvetica','normal');
-    doc.text(valLines, margin+labelW+3, cy+6);
-    cy += rowH;
-  });
-  return cy;
-}
-function drawSectionTitle(doc, y, text, pageW){
-  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...BRAND_RED_TEXT);
-  doc.text(text, 14, y);
-  doc.setDrawColor(...BRAND_RED);
-  doc.line(14, y+1.5, pageW-14, y+1.5);
-  doc.setTextColor(20);
-  return y+8;
-}
-function drawParagraph(doc, y, text, pageW, checkNewPage){
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(30);
-  const lines = doc.splitTextToSize(text, pageW-28);
-  lines.forEach(line=>{
-    y = checkNewPage(y, 6);
-    doc.text(line, 14, y);
-    y += 5;
-  });
-  return y+3;
-}
-function drawSignatures(doc, y, leftName, rightName, pageW){
-  y += 6;
-  doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-  doc.text('_______________________________', 14, y);
-  doc.text('_______________________________', pageW/2+6, y);
-  y += 5;
-  doc.text(leftName, 14, y);
-  doc.text(rightName, pageW/2+6, y);
-  y += 6;
-  doc.text('Lieu et date : ......................................', 14, y);
-  doc.text('Lieu et date : ......................................', pageW/2+6, y);
-  return y;
-}
+/* ---------- Génération HTML imprimable, fidèle au visuel des modèles ---------- */
+const CONTRAT_CSS = `
+  @page { size: A4; margin: 18mm 16mm; }
+  *{box-sizing:border-box;}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;margin:0;padding:0;font-size:10.5pt;line-height:1.45;position:relative;}
+  .wm{
+    position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);
+    font-size:52pt;font-weight:800;color:#B0223A;opacity:.055;white-space:nowrap;letter-spacing:2px;z-index:0;
+  }
+  .page-content{position:relative;z-index:1;}
+  h1.title{font-size:19pt;font-weight:800;text-align:center;margin:0 0 4px 0;letter-spacing:.3px;}
+  p.subtitle{font-style:italic;color:#666;text-align:center;font-size:9.5pt;margin:0 0 10px 0;}
+  hr.rule{border:none;border-top:2px solid #B0223A;margin:0 0 14px 0;}
+  table.info{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  table.info td{border:1px solid #ddd;padding:7px 10px;font-size:9.8pt;vertical-align:top;}
+  table.info td.lbl{background:#A5203A;color:#fff;font-weight:700;width:150px;}
+  h2.sec{font-size:11.5pt;font-weight:800;color:#A5203A;border-bottom:1.4px solid #A5203A;padding-bottom:3px;margin:16px 0 7px 0;}
+  p.body-text{margin:0 0 9px 0;text-align:justify;white-space:pre-line;}
+  .warn-box{background:#FFF6E0;border:1px solid #E8C468;border-radius:4px;padding:10px 12px;font-size:9pt;color:#6B5217;margin:10px 0;}
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:26px;}
+  .sig-line{border-top:1px solid #333;margin-top:34px;padding-top:5px;font-size:9.8pt;}
+  .sig-label{font-weight:700;font-size:9.5pt;margin-bottom:2px;}
+  .sig-meta{font-size:9pt;color:#555;margin-top:14px;}
+  footer.doc-footer{
+    position:fixed;bottom:8mm;left:0;right:0;text-align:center;font-size:7.6pt;color:#999;z-index:1;
+  }
+  @media print{ .no-print{display:none !important;} }
+`;
 
-/* ---------- Générateurs par type ---------- */
-function generateContratPDF(type){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  let y = 20;
-  const checkNewPage = (yy, need)=>{
-    if(yy+need > pageH-16){ doc.addPage(); return 20; }
-    return yy;
-  };
+function fmtDateFRLong(iso){
+  if(!iso) return '.....................................';
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('fr-CH',{day:'numeric',month:'long',year:'numeric'});
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function pList(paras){ return paras.map(p=>`<p class="body-text">${esc(p)}</p>`).join(''); }
+
+function buildContratDoc(type){
+  const wm = `<div class="wm">ORIGINAL'S COMPLETOS · ORIGINAL'S COMPLETOS</div>`;
+  const foot = (label)=> `<footer class="doc-footer">${COMPANY.marque.toUpperCase()} · Bussigny, Suisse · ${COMPANY.tel} · ${COMPANY.email}${label?(' — '+label):''}</footer>`;
 
   if(type==='cdd'){
-    const nom = getVal('nom'), naissance = fmtDateFR(getVal('naissance')), adresse = getVal('adresse'),
-      avs = getVal('avs'), dDebut = fmtDateFR(getVal('dateDebut')), dFin = fmtDateFR(getVal('dateFin')),
-      salaire = getVal('salaire')||'23', lieuSig = getVal('lieuSignature')||'Bussigny', dSig = fmtDateFR(getVal('dateSignature'));
+    const nom=getVal('nom'), naissance=fmtDateFRLong(getVal('naissance')), adresse=getVal('adresse'),
+      avs=getVal('avs'), dDebut=fmtDateFRLong(getVal('dateDebut')), dFin=fmtDateFRLong(getVal('dateFin')),
+      salaire=getVal('salaire')||'23', lieuSig=getVal('lieuSignature')||'Bussigny', dSig=fmtDateFRLong(getVal('dateSignature'));
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(20);
-    doc.text('CONTRAT DE TRAVAIL', pageW/2, y, {align:'center'}); y+=6;
-    doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(90);
-    doc.text(`Durée déterminée (CDD) — ${COMPANY.marque}, Cuisine Événementielle`, pageW/2, y, {align:'center'}); y+=4;
-    doc.setDrawColor(...BRAND_RED); doc.setLineWidth(0.6); doc.line(14,y,pageW-14,y); y+=6;
+    return `
+    ${wm}
+    <div class="page-content">
+      <h1 class="title">CONTRAT DE TRAVAIL</h1>
+      <p class="subtitle">Durée déterminée (CDD) — ${esc(COMPANY.marque)}, Cuisine Événementielle</p>
+      <hr class="rule">
+      <table class="info">
+        <tr><td class="lbl">Employeur</td><td>Orlando Quispe Oscco — ${esc(COMPANY.nom)}, ${esc(COMPANY.adresse)} (IDE ${COMPANY.ide})</td></tr>
+        <tr><td class="lbl">Employé(e)</td><td>${esc(nom)} — né(e) le ${naissance} — ${esc(adresse)}${avs?' — n° AVS '+esc(avs):''}</td></tr>
+      </table>
+      ${pList([`Entre l'employeur mentionné ci-dessus, ci-après « l'employeur », et la personne mentionnée ci-dessus, ci-après « l'employé(e) », il est convenu ce qui suit :`])}
 
-    y = drawHeaderTable(doc, y, [
-      ['Employeur', `Orlando Quispe Oscco — ${COMPANY.nom}, ${COMPANY.adresse} (IDE ${COMPANY.ide})`],
-      ['Employé(e)', `${nom} — né(e) le ${naissance} — ${adresse}${avs? ' — n° AVS '+avs:''}`]
-    ], pageW); y+=8;
+      <h2 class="sec">1. Objet et nature du contrat</h2>
+      ${pList([
+        `Le présent contrat est un contrat de travail à durée déterminée (CDD) au sens des art. 319 ss CO, conclu pour les besoins ponctuels de l'activité événementielle de l'employeur (festivals, marchés, manifestations).`,
+        `L'employé(e) est engagé(e) en qualité d'employé polyvalent et exercera notamment les tâches suivantes : préparation et cuisson des produits, service à la clientèle, encaissement, entretien et nettoyage du poste de travail, application des règles d'hygiène (HACCP) en vigueur dans l'entreprise, et toute autre tâche nécessaire.`
+      ])}
 
-    y = drawParagraph(doc, y, `Entre l'employeur mentionné ci-dessus, ci-après « l'employeur », et la personne mentionnée ci-dessus, ci-après « l'employé(e) », il est convenu ce qui suit :`, pageW, checkNewPage);
+      <h2 class="sec">2. Début, durée et fin des rapports de travail</h2>
+      ${pList([`Le contrat débute le ${dDebut} et prend fin de plein droit le ${dFin}, sans qu'il soit nécessaire de donner congé (art. 334 al. 1 CO).`])}
 
-    y = drawSectionTitle(doc, y, '1. Objet et nature du contrat', pageW);
-    y = drawParagraph(doc, y, `Le présent contrat est un contrat de travail à durée déterminée (CDD) au sens des art. 319 ss CO, conclu pour les besoins ponctuels de l'activité événementielle de l'employeur (festivals, marchés, manifestations).`, pageW, checkNewPage);
-    y = drawParagraph(doc, y, `L'employé(e) est engagé(e) en qualité d'employé polyvalent et exercera notamment les tâches suivantes : préparation et cuisson des produits, service à la clientèle, encaissement, entretien et nettoyage du poste de travail, application des règles d'hygiène (HACCP) en vigueur dans l'entreprise, et toute autre tâche nécessaire.`, pageW, checkNewPage);
+      <h2 class="sec">3. Période d'essai</h2>
+      ${pList([`Le contrat de travail ne prévoit pas de période d'essai.`])}
 
-    y = drawSectionTitle(doc, y, '2. Début, durée et fin des rapports de travail', pageW);
-    y = drawParagraph(doc, y, `Le contrat débute le ${dDebut} et prend fin de plein droit le ${dFin}, sans qu'il soit nécessaire de donner congé (art. 334 al. 1 CO).`, pageW, checkNewPage);
+      <h2 class="sec">4. Lieu de travail</h2>
+      ${pList([`Le lieu de travail correspond à l'emplacement du ou des stands de l'employeur lors des événements pour lesquels l'employé(e) est engagé(e).`])}
 
-    y = drawSectionTitle(doc, y, '3. Période d\'essai', pageW);
-    y = drawParagraph(doc, y, `Le contrat de travail ne prévoit pas de période d'essai.`, pageW, checkNewPage);
+      <h2 class="sec">5. Clause de mobilité</h2>
+      ${pList([`En cas de besoin de service ou de réorganisation, l'employé(e) peut être affecté(e) à d'autres postes ou emplacements appartenant à l'employeur, dans une mesure compatible avec sa fonction et ses compétences. Une telle affectation ne constitue pas une modification du présent contrat.`])}
 
-    y = drawSectionTitle(doc, y, '4. Lieu de travail', pageW);
-    y = drawParagraph(doc, y, `Le lieu de travail correspond à l'emplacement du ou des stands de l'employeur lors des événements pour lesquels l'employé(e) est engagé(e).`, pageW, checkNewPage);
+      <h2 class="sec">6. Temps de travail et horaires</h2>
+      ${pList([`L'horaire de travail est fixé en fonction des besoins de l'événement et communiqué à l'employé(e) au préalable. Les horaires et jours de repos peuvent être adaptés en cas de besoin du service, sans que cela constitue une modification du contrat. La durée du travail respecte les limites fixées par la loi sur le travail (LTr) et, le cas échéant, par la convention collective de travail applicable (voir art. 15).`])}
 
-    y = drawSectionTitle(doc, y, '5. Clause de mobilité', pageW);
-    y = drawParagraph(doc, y, `En cas de besoin de service ou de réorganisation, l'employé(e) peut être affecté(e) à d'autres postes ou emplacements appartenant à l'employeur, dans une mesure compatible avec sa fonction et ses compétences. Une telle affectation ne constitue pas une modification du présent contrat.`, pageW, checkNewPage);
+      <h2 class="sec">7. Salaire</h2>
+      ${pList([
+        `L'employé(e) perçoit un salaire brut de CHF ${salaire}.- par heure, y compris vacances, jours fériés et 13ème salaire. Le salaire est versé le 30 de chaque mois ou à l'échéance du contrat, sur le compte bancaire ou postal communiqué par l'employé(e).`,
+        `L'employeur remet à l'employé(e) un décompte de salaire détaillant le salaire brut, les déductions et le montant net versé.`
+      ])}
 
-    y = drawSectionTitle(doc, y, '6. Temps de travail et horaires', pageW);
-    y = drawParagraph(doc, y, `L'horaire de travail est fixé en fonction des besoins de l'événement et communiqué à l'employé(e) au préalable. Les horaires et jours de repos peuvent être adaptés en cas de besoin du service, sans que cela constitue une modification du contrat. La durée du travail respecte les limites fixées par la loi sur le travail (LTr) et, le cas échéant, par la convention collective de travail applicable (voir art. 15).`, pageW, checkNewPage);
+      <h2 class="sec">8. Heures supplémentaires</h2>
+      ${pList([`Les heures effectuées au-delà de l'horaire convenu ne peuvent être exigées que dans la mesure où l'employé(e) peut s'en charger et où les règles de la bonne foi permettent de les lui demander (art. 321c CO). Elles sont rémunérées selon l'article 7 du présent contrat.`])}
 
-    y = checkNewPage(y, 24);
-    y = drawSectionTitle(doc, y, '7. Salaire', pageW);
-    y = drawParagraph(doc, y, `L'employé(e) perçoit un salaire brut de CHF ${salaire}.- par heure, y compris vacances, jours fériés et 13ème salaire. Le salaire est versé le 30 de chaque mois ou à l'échéance du contrat, sur le compte bancaire ou postal communiqué par l'employé(e).`, pageW, checkNewPage);
-    y = drawParagraph(doc, y, `L'employeur remet à l'employé(e) un décompte de salaire détaillant le salaire brut, les déductions et le montant net versé.`, pageW, checkNewPage);
+      <h2 class="sec">9. Empêchement de travailler (maladie, accident)</h2>
+      ${pList([`En cas d'incapacité de travail pour cause de maladie ou d'accident non fautif, l'employé(e) en informe immédiatement l'employeur et fournit un certificat médical. Les prestations dues sont réglées conformément à l'art. 324a CO et, le cas échéant, à l'assurance perte de gain maladie souscrite par l'employeur.`])}
 
-    y = drawSectionTitle(doc, y, '8. Heures supplémentaires', pageW);
-    y = drawParagraph(doc, y, `Les heures effectuées au-delà de l'horaire convenu ne peuvent être exigées que dans la mesure où l'employé(e) peut s'en charger et où les règles de la bonne foi permettent de les lui demander (art. 321c CO). Elles sont rémunérées selon l'article 7 du présent contrat.`, pageW, checkNewPage);
+      <h2 class="sec">10. Tenue de travail et matériel</h2>
+      ${pList([`Compte tenu du contact permanent avec la clientèle et de la nécessité de préserver l'image de l'entreprise, l'employé(e) s'engage à porter en tout temps une tenue correcte et propre, conforme à la charte d'hygiène du personnel de l'entreprise. Les tenues et le matériel remis à l'engagement (uniforme, badge, etc.) restent la propriété de l'employeur et doivent être restitués à la fin des rapports de travail.`])}
 
-    y = drawSectionTitle(doc, y, '9. Empêchement de travailler (maladie, accident)', pageW);
-    y = drawParagraph(doc, y, `En cas d'incapacité de travail pour cause de maladie ou d'accident non fautif, l'employé(e) en informe immédiatement l'employeur et fournit un certificat médical. Les prestations dues sont réglées conformément à l'art. 324a CO et, le cas échéant, à l'assurance perte de gain maladie souscrite par l'employeur.`, pageW, checkNewPage);
+      <h2 class="sec">11. Obligations de l'employé(e)</h2>
+      ${pList([`✓ Exécuter le travail confié avec soin, diligence et fidélité (art. 321a CO).\n✓ Respecter les consignes d'hygiène et de sécurité alimentaire (HACCP) en vigueur dans l'entreprise.\n✓ Sauvegarder les intérêts légitimes de l'employeur et garder le secret sur les affaires internes de l'entreprise, même après la fin du contrat, dans la mesure exigée pour sauvegarder les intérêts légitimes de l'employeur (art. 321a al. 4 CO).\n✓ Respecter le règlement intérieur et les directives de l'employeur.`])}
 
-    y = drawSectionTitle(doc, y, '10. Tenue de travail et matériel', pageW);
-    y = drawParagraph(doc, y, `Compte tenu du contact permanent avec la clientèle et de la nécessité de préserver l'image de l'entreprise, l'employé(e) s'engage à porter en tout temps une tenue correcte et propre, conforme à la charte d'hygiène du personnel de l'entreprise. Les tenues et le matériel remis à l'engagement (uniforme, badge, etc.) restent la propriété de l'employeur et doivent être restitués à la fin des rapports de travail.`, pageW, checkNewPage);
+      <h2 class="sec">12. Changement d'adresse ou de coordonnées</h2>
+      ${pList([`Tout changement d'adresse, de coordonnées bancaires ou de numéro de téléphone doit être communiqué sans délai à l'employeur.`])}
 
-    y = drawSectionTitle(doc, y, '11. Obligations de l\'employé(e)', pageW);
-    y = drawParagraph(doc, y, `✓ Exécuter le travail confié avec soin, diligence et fidélité (art. 321a CO).\n✓ Respecter les consignes d'hygiène et de sécurité alimentaire (HACCP) en vigueur dans l'entreprise.\n✓ Sauvegarder les intérêts légitimes de l'employeur et garder le secret sur les affaires internes de l'entreprise, même après la fin du contrat, dans la mesure exigée pour sauvegarder les intérêts légitimes de l'employeur (art. 321a al. 4 CO).\n✓ Respecter le règlement intérieur et les directives de l'employeur.`, pageW, checkNewPage);
+      <h2 class="sec">13. Protection des données</h2>
+      ${pList([`Les données personnelles de l'employé(e) sont traitées par l'employeur dans le respect de la loi fédérale sur la protection des données (LPD), exclusivement dans le cadre nécessaire à l'exécution du contrat de travail et aux obligations légales de l'employeur (assurances sociales, décomptes de salaire, etc.).`])}
 
-    y = drawSectionTitle(doc, y, '12. Changement d\'adresse ou de coordonnées', pageW);
-    y = drawParagraph(doc, y, `Tout changement d'adresse, de coordonnées bancaires ou de numéro de téléphone doit être communiqué sans délai à l'employeur.`, pageW, checkNewPage);
+      <h2 class="sec">14. Fin des rapports de travail</h2>
+      ${pList([
+        `En cas de résiliation anticipée, la partie qui résilie le notifie par écrit à l'autre partie et respecte les délais de congé légaux ou convenus (art. 335b CO).`,
+        `Chacune des parties peut en tout temps résilier le contrat avec effet immédiat pour de justes motifs au sens de l'art. 337 CO. Sont notamment considérées comme de justes motifs toutes les circonstances qui, selon les règles de la bonne foi, ne permettent pas d'exiger de celui qui a donné le congé la continuation des rapports de travail.`
+      ])}
 
-    y = drawSectionTitle(doc, y, '13. Protection des données', pageW);
-    y = drawParagraph(doc, y, `Les données personnelles de l'employé(e) sont traitées par l'employeur dans le respect de la loi fédérale sur la protection des données (LPD), exclusivement dans le cadre nécessaire à l'exécution du contrat de travail et aux obligations légales de l'employeur (assurances sociales, décomptes de salaire, etc.).`, pageW, checkNewPage);
+      <h2 class="sec">15. Convention collective et dispositions légales applicables</h2>
+      ${pList([`Pour tout ce qui n'est pas réglé par le présent contrat, les dispositions du Code des obligations (art. 319 ss CO) sont applicables, ainsi que, le cas échéant, la Convention collective nationale de travail pour l'hôtellerie-restauration (CCNT) si l'activité de l'employeur entre dans son champ d'application.`])}
 
-    y = checkNewPage(y, 40);
-    y = drawSectionTitle(doc, y, '14. Fin des rapports de travail', pageW);
-    y = drawParagraph(doc, y, `En cas de résiliation anticipée, la partie qui résilie le notifie par écrit à l'autre partie et respecte les délais de congé légaux ou convenus (art. 335b CO).`, pageW, checkNewPage);
-    y = drawParagraph(doc, y, `Chacune des parties peut en tout temps résilier le contrat avec effet immédiat pour de justes motifs au sens de l'art. 337 CO. Sont notamment considérées comme de justes motifs toutes les circonstances qui, selon les règles de la bonne foi, ne permettent pas d'exiger de celui qui a donné le congé la continuation des rapports de travail.`, pageW, checkNewPage);
+      <h2 class="sec">16. For et droit applicable</h2>
+      ${pList([`Le présent contrat est soumis au droit suisse. Le for juridique est celui du domicile ou du siège de la partie défenderesse, sous réserve des dispositions impératives de la loi sur les fors en matière de droit du travail.`])}
 
-    y = drawSectionTitle(doc, y, '15. Convention collective et dispositions légales applicables', pageW);
-    y = drawParagraph(doc, y, `Pour tout ce qui n'est pas réglé par le présent contrat, les dispositions du Code des obligations (art. 319 ss CO) sont applicables, ainsi que, le cas échéant, la Convention collective nationale de travail pour l'hôtellerie-restauration (CCNT) si l'activité de l'employeur entre dans son champ d'application.`, pageW, checkNewPage);
+      <h2 class="sec">17. Dispositions finales</h2>
+      ${pList([`Toute modification du présent contrat doit être faite par écrit pour être valable. Si une clause du présent contrat devait être déclarée nulle ou inapplicable, les autres clauses resteraient pleinement valables.`])}
 
-    y = drawSectionTitle(doc, y, '16. For et droit applicable', pageW);
-    y = drawParagraph(doc, y, `Le présent contrat est soumis au droit suisse. Le for juridique est celui du domicile ou du siège de la partie défenderesse, sous réserve des dispositions impératives de la loi sur les fors en matière de droit du travail.`, pageW, checkNewPage);
+      <p class="body-text">Fait à ${esc(lieuSig)}, le ${dSig}, en deux exemplaires, chaque partie reconnaissant avoir reçu le sien.</p>
+      <p class="body-text" style="font-style:italic;">La signature de l'employé(e) est précédée de la mention manuscrite « lu et approuvé ».</p>
 
-    y = drawSectionTitle(doc, y, '17. Dispositions finales', pageW);
-    y = drawParagraph(doc, y, `Toute modification du présent contrat doit être faite par écrit pour être valable. Si une clause du présent contrat devait être déclarée nulle ou inapplicable, les autres clauses resteraient pleinement valables.`, pageW, checkNewPage);
-
-    y = checkNewPage(y, 6);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-    doc.text(`Fait à ${lieuSig}, le ${dSig}, en deux exemplaires, chaque partie reconnaissant avoir reçu le sien.`, 14, y); y+=6;
-    doc.setFont('helvetica','italic');
-    y = drawParagraph(doc, y, `La signature de l'employé(e) est précédée de la mention manuscrite « lu et approuvé ».`, pageW, checkNewPage);
-
-    y = checkNewPage(y, 24);
-    doc.setFont('helvetica','bold'); doc.text("L'EMPLOYEUR", 14, y); doc.text("L'EMPLOYÉ(E)", pageW/2+6, y); y+=6;
-    doc.setFont('helvetica','normal');
-    doc.text('Orlando Quispe Oscco', 14, y); doc.text(nom||'', pageW/2+6, y);
-    drawSignatures(doc, y, '', '', pageW);
-
-  } else {
-    // ami / famille — attestations
-    const isAmi = type==='ami';
-    const nom = getVal('nom');
-    const domicile = isAmi ? getVal('domicile') : '';
-    const lien = !isAmi ? getVal('lien') : '';
-    const evenement = getVal('evenement');
-    const dDebut = fmtDateFR(getVal('dateDebutEv')), dFin = fmtDateFR(getVal('dateFinEv'));
-    const lieuSig = getVal('lieuSignature')||'Bussigny', dSig = fmtDateFR(getVal('dateSignature'));
-    const roleLabel = isAmi ? "Ami(e) aidant(e)" : 'Proche aidant';
-    const roleLabelLower = isAmi ? "l'ami(e) aidant(e)" : 'le proche aidant';
-
-    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(20);
-    doc.text(isAmi ? "ATTESTATION D'AIDE BÉNÉVOLE ENTRE AMIS" : "ATTESTATION D'ENTRAIDE FAMILIALE BÉNÉVOLE", pageW/2, y, {align:'center', maxWidth: pageW-28}); y+=6;
-    doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(90);
-    doc.text(isAmi ? "Coup de main ponctuel et bénévole — en dehors de tout lien de subordination ou d'activité lucrative"
-      : "Établie hors du champ de la notion d'activité lucrative, au sens de la pratique du Secrétariat d'État à l'économie (SECO)",
-      pageW/2, y, {align:'center', maxWidth: pageW-28}); y+=5;
-    doc.setDrawColor(...BRAND_RED); doc.setLineWidth(0.6); doc.line(14,y,pageW-14,y); y+=6;
-
-    const headerRows = [
-      ['Titulaire', `Orlando Quispe Oscco — ${COMPANY.nom}`],
-      [roleLabel, isAmi ? `${nom||'Nom, prénom :'}` : `${nom||''}${lien? ' ('+lien+')':''}`],
-      ['Événement', evenement],
-      ['Dates', `Du ${dDebut} au ${dFin}`],
-      ['Rémunération', isAmi ? 'Aucune — aide bénévole et ponctuelle' : 'Aucune — aide bénévole (entraide familiale)']
-    ];
-    y = drawHeaderTable(doc, y, headerRows, pageW); y+=8;
-
-    y = drawSectionTitle(doc, y, '1. Parties', pageW);
-    y = drawParagraph(doc, y, `L'entreprise — ${COMPANY.nom}, entreprise individuelle inscrite au Registre du commerce du canton de Vaud (IDE/UID ${COMPANY.ide}), sise ${COMPANY.adresse}, représentée par son titulaire, Monsieur Orlando Quispe Oscco, ci-après « le titulaire ».`, pageW, checkNewPage);
-    if(isAmi){
-      y = drawParagraph(doc, y, `L'ami(e) aidant(e) — Nom, prénom : ${nom||''}\nDomicile : ${domicile||''}\nci-après « l'ami(e) aidant(e) ».`, pageW, checkNewPage);
-    } else {
-      y = drawParagraph(doc, y, `Le proche aidant — Monsieur/Madame ${nom||''}, ${lien||'proche'} du titulaire, ci-après « le proche aidant ».`, pageW, checkNewPage);
-    }
-
-    y = drawSectionTitle(doc, y, '2. Objet', pageW);
-    y = drawParagraph(doc, y, `${isAmi? "L'ami(e) aidant(e)":"Le proche aidant"} apportera son aide bénévole ${isAmi? 'sur le stand et/ou en cuisine':'en cuisine'} au titulaire à l'occasion de ${evenement}, qui se déroulera du ${dDebut} au ${dFin} inclus.`, pageW, checkNewPage);
-    if(isAmi){
-      y = drawParagraph(doc, y, `Cette aide est apportée à titre strictement bénévole, ponctuel et occasionnel, sur une base amicale, sans lien de subordination assimilable à un rapport de travail au sens de l'art. 319 CO, et sans contrepartie financière ni avantage en nature d'aucune sorte.`, pageW, checkNewPage);
-    } else {
-      y = drawParagraph(doc, y, `Cette aide est apportée dans le cadre de l'entraide familiale, à titre strictement bénévole et occasionnel, sans lien de subordination assimilable à un rapport de travail au sens de l'art. 319 CO.`, pageW, checkNewPage);
-    }
-
-    y = drawSectionTitle(doc, y, '3. Absence de rémunération', pageW);
-    y = drawParagraph(doc, y, `Il est expressément convenu qu'aucune rémunération, salaire ou avantage en nature équivalent à un salaire n'est dû par le titulaire à ${roleLabelLower} en contrepartie de cette aide. ${isAmi? "L'ami(e) aidant(e) agit":"Le proche aidant agit"} de sa propre initiative, à titre ${isAmi?'amical et bénévole':'bénévole et par entraide familiale'}, sans attente de contrepartie financière.`, pageW, checkNewPage);
-
-    y = drawSectionTitle(doc, y, '4. Nature de la présente attestation', pageW);
-    y = drawParagraph(doc, y, `La présente attestation ne constitue pas un contrat de travail. Elle a pour seul but de documenter les circonstances de ${isAmi? "l'aide bénévole fournie à titre amical, ponctuel et occasionnel.":"l'entraide familiale fournie, conformément à la distinction opérée par le SECO entre l'entraide familiale, non soumise à l'obligation d'annonce, et l'activité lucrative."}`, pageW, checkNewPage);
-    y = drawParagraph(doc, y, `Les parties sont invitées à vérifier, préalablement à l'événement, la couverture en cas d'accident (assurance-accidents de ${roleLabelLower}, respectivement couverture responsabilité civile du titulaire) ; la présente attestation ne vaut pas police ou garantie d'assurance.`, pageW, checkNewPage);
-
-    if(isAmi){
-      y = checkNewPage(y, 26);
-      doc.setFillColor(255,247,230); doc.setDrawColor(230,180,80);
-      const warnText = `Point d'attention : Contrairement à l'entraide entre proches (conjoint, parents, frères et sœurs), l'aide occasionnelle entre amis ne bénéficie pas d'une exemption automatique équivalente reconnue par le SECO. Elle reste généralement admise si elle demeure ponctuelle, bénévole, sans lien de subordination et sans contrepartie — mais pourrait être requalifiée en cas de récurrence ou de rémunération déguisée. En cas de doute, se renseigner auprès du SECO ou d'un spécialiste avant l'événement.`;
-      const warnLines = doc.splitTextToSize(warnText, pageW-32);
-      const boxH = warnLines.length*4.6+8;
-      doc.rect(14, y-4, pageW-28, boxH, 'FD');
-      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(90,60,10);
-      doc.text(warnLines, 18, y);
-      y += boxH+4; doc.setTextColor(20);
-    }
-
-    y = drawSectionTitle(doc, y, '5. Signatures', pageW);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
-    doc.text(`Fait à ${lieuSig}, le ${dSig}, en deux exemplaires, chaque partie reconnaissant avoir reçu le sien.`, 14, y, {maxWidth: pageW-28}); y+=12;
-
-    doc.setFont('helvetica','bold');
-    doc.text('LE TITULAIRE', 14, y); doc.text(roleLabel.toUpperCase(), pageW/2+6, y); y+=8;
-    doc.setFont('helvetica','normal');
-    doc.text('Orlando Quispe Oscco', 14, y); doc.text(nom||'', pageW/2+6, y);
-    drawSignatures(doc, y, '', '', pageW);
+      <div class="sig-grid">
+        <div><div class="sig-label">L'EMPLOYEUR</div><div class="sig-line">Orlando Quispe Oscco</div></div>
+        <div><div class="sig-label">L'EMPLOYÉ(E)</div><div class="sig-line">${esc(nom)}</div></div>
+      </div>
+    </div>
+    ${foot('page 1')}`;
   }
 
-  // Watermark + footer sur toutes les pages
-  const pageCount = doc.internal.getNumberOfPages();
-  for(let i=1;i<=pageCount;i++){
-    doc.setPage(i);
-    drawWatermark(doc, pageW, pageH);
-    drawFooter(doc, pageW, pageH, i, pageCount);
-  }
+  // ---- ami / famille ----
+  const isAmi = type==='ami';
+  const nom=getVal('nom'), domicile=isAmi?getVal('domicile'):'', lien=!isAmi?getVal('lien'):'',
+    evenement=getVal('evenement'), dDebut=fmtDateFRLong(getVal('dateDebutEv')), dFin=fmtDateFRLong(getVal('dateFinEv')),
+    lieuSig=getVal('lieuSignature')||'Bussigny', dSig=fmtDateFRLong(getVal('dateSignature'));
+  const roleLabel = isAmi ? "Ami(e) aidant(e)" : 'Proche aidant';
+  const roleLabelLower = isAmi ? "l'ami(e) aidant(e)" : 'le proche aidant';
 
-  return doc;
+  return `
+  ${wm}
+  <div class="page-content">
+    <h1 class="title" style="font-size:15.5pt;">${isAmi ? "ATTESTATION D'AIDE BÉNÉVOLE ENTRE AMIS" : "ATTESTATION D'ENTRAIDE FAMILIALE BÉNÉVOLE"}</h1>
+    <p class="subtitle">${isAmi ? "Coup de main ponctuel et bénévole — en dehors de tout lien de subordination ou d'activité lucrative" : "Établie hors du champ de la notion d'activité lucrative, au sens de la pratique du Secrétariat d'État à l'économie (SECO)"}</p>
+    <hr class="rule">
+    <table class="info">
+      <tr><td class="lbl">Titulaire</td><td>Orlando Quispe Oscco — ${esc(COMPANY.nom)}</td></tr>
+      <tr><td class="lbl">${roleLabel}</td><td>${isAmi ? esc(nom||'Nom, prénom :') : (esc(nom)+(lien?' ('+esc(lien)+')':''))}</td></tr>
+      <tr><td class="lbl">Événement</td><td>${esc(evenement)}</td></tr>
+      <tr><td class="lbl">Dates</td><td>Du ${dDebut} au ${dFin}</td></tr>
+      <tr><td class="lbl">Rémunération</td><td>${isAmi ? 'Aucune — aide bénévole et ponctuelle' : 'Aucune — aide bénévole (entraide familiale)'}</td></tr>
+    </table>
+
+    <h2 class="sec">1. Parties</h2>
+    ${pList([
+      `L'entreprise — ${COMPANY.nom}, entreprise individuelle inscrite au Registre du commerce du canton de Vaud (IDE/UID ${COMPANY.ide}), sise ${COMPANY.adresse}, représentée par son titulaire, Monsieur Orlando Quispe Oscco, ci-après « le titulaire ».`,
+      isAmi
+        ? `L'ami(e) aidant(e) — Nom, prénom : ${nom||''}\nDomicile : ${domicile||''}\nci-après « l'ami(e) aidant(e) ».`
+        : `Le proche aidant — Monsieur/Madame ${nom||''}, ${lien||'proche'} du titulaire, ci-après « le proche aidant ».`
+    ])}
+
+    <h2 class="sec">2. Objet</h2>
+    ${pList([
+      `${isAmi? "L'ami(e) aidant(e)":"Le proche aidant"} apportera son aide bénévole ${isAmi? 'sur le stand et/ou en cuisine':'en cuisine'} au titulaire à l'occasion de ${evenement}, qui se déroulera du ${dDebut} au ${dFin} inclus.`,
+      isAmi
+        ? `Cette aide est apportée à titre strictement bénévole, ponctuel et occasionnel, sur une base amicale, sans lien de subordination assimilable à un rapport de travail au sens de l'art. 319 CO, et sans contrepartie financière ni avantage en nature d'aucune sorte.`
+        : `Cette aide est apportée dans le cadre de l'entraide familiale, à titre strictement bénévole et occasionnel, sans lien de subordination assimilable à un rapport de travail au sens de l'art. 319 CO.`
+    ])}
+
+    <h2 class="sec">3. Absence de rémunération</h2>
+    ${pList([`Il est expressément convenu qu'aucune rémunération, salaire ou avantage en nature équivalent à un salaire n'est dû par le titulaire à ${roleLabelLower} en contrepartie de cette aide. ${isAmi? "L'ami(e) aidant(e) agit":"Le proche aidant agit"} de sa propre initiative, à titre ${isAmi?'amical et bénévole':'bénévole et par entraide familiale'}, sans attente de contrepartie financière.`])}
+
+    <h2 class="sec">4. Nature de la présente attestation</h2>
+    ${pList([
+      `La présente attestation ne constitue pas un contrat de travail. Elle a pour seul but de documenter les circonstances de ${isAmi? "l'aide bénévole fournie à titre amical, ponctuel et occasionnel.":"l'entraide familiale fournie, conformément à la distinction opérée par le SECO entre l'entraide familiale, non soumise à l'obligation d'annonce, et l'activité lucrative."}`,
+      `Les parties sont invitées à vérifier, préalablement à l'événement, la couverture en cas d'accident (assurance-accidents de ${roleLabelLower}, respectivement couverture responsabilité civile du titulaire) ; la présente attestation ne vaut pas police ou garantie d'assurance.`
+    ])}
+
+    ${isAmi ? `<div class="warn-box"><strong>Point d'attention :</strong> Contrairement à l'entraide entre proches (conjoint, parents, frères et sœurs), l'aide occasionnelle entre amis ne bénéficie pas d'une exemption automatique équivalente reconnue par le SECO. Elle reste généralement admise si elle demeure ponctuelle, bénévole, sans lien de subordination et sans contrepartie — mais pourrait être requalifiée en cas de récurrence ou de rémunération déguisée. En cas de doute, se renseigner auprès du SECO ou d'un spécialiste avant l'événement.</div>` : ''}
+
+    <h2 class="sec">5. Signatures</h2>
+    <p class="body-text">Fait à ${esc(lieuSig)}, le ${dSig}, en deux exemplaires, chaque partie reconnaissant avoir reçu le sien.</p>
+    <div class="sig-grid">
+      <div><div class="sig-label">LE TITULAIRE</div><div class="sig-line">Orlando Quispe Oscco</div></div>
+      <div><div class="sig-label">${roleLabel.toUpperCase()}</div><div class="sig-line">${esc(nom)}</div></div>
+    </div>
+  </div>
+  ${foot('page 1 / 1')}`;
 }
 
 document.getElementById('btn-gen-contrat').addEventListener('click', async ()=>{
@@ -1526,19 +1361,20 @@ document.getElementById('btn-gen-contrat').addEventListener('click', async ()=>{
   const nom = getVal('nom');
   if(!nom){ alert('Merci de renseigner au moins le nom de la personne concernée.'); return; }
   try{
-    statusEl.textContent = 'Génération du PDF…';
-    const doc = generateContratPDF(type);
-    const typeLabel = {cdd:'CDD', ami:'Aide amicale', famille:'Entraide familiale'}[type];
-    const filename = `${typeLabel.replace(/\s/g,'-')}-${nom.replace(/\s/g,'-')}.pdf`;
-    doc.save(filename);
-    statusEl.textContent = 'PDF téléchargé.';
+    statusEl.textContent = 'Ouverture de l\'aperçu…';
+    const bodyHtml = buildContratDoc(type);
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(nom)}</title><style>${CONTRAT_CSS}</style></head><body onload="window.print()">${bodyHtml}</body></html>`);
+    win.document.close();
+    statusEl.textContent = "Aperçu ouvert dans un nouvel onglet — utilise « Enregistrer au format PDF » dans la fenêtre d'impression.";
 
+    const typeLabel = {cdd:'CDD', ami:'Aide amicale', famille:'Entraide familiale'}[type];
     state.contrats = state.contrats || [];
     state.contrats.push(withId({ date: new Date().toISOString().slice(0,10), type: typeLabel, personne: nom }));
     await saveKey('og-contrats', state.contrats);
     renderContratHistory();
   }catch(err){
-    statusEl.textContent = 'Erreur lors de la génération du PDF.';
+    statusEl.textContent = 'Erreur lors de la génération du document.';
   }
 });
 
@@ -1869,10 +1705,17 @@ document.getElementById('btn-deduct-stock').addEventListener('click', async ()=>
   alert('Stock mis à jour.');
 });
 
+function renderStockTotalValue(){
+  const total = state.ingredients.reduce((s,i)=> s + (Number(i.stock)||0) * (Number(i.cout)||0), 0);
+  document.getElementById('stock-total-value').textContent = chf(total);
+  document.getElementById('stock-value-date').textContent = new Date().toLocaleDateString('fr-CH');
+}
+
 function renderStocks(){
   renderIngredients();
   renderProduits();
   renderCalcInputs();
+  renderStockTotalValue();
 }
 
 /* ============================================================
@@ -2025,9 +1868,16 @@ function renderAll(){
 })();
 
 async function startApp(){
+  await initFirebase();
   await loadAll();
   // Si première utilisation (aucune donnée sauvegardée du tout), on sauvegarde la graine
-  const check = await (async ()=>{ try{ return await window.storage.get('og-journal', true);}catch(e){return null;} })();
+  const check = await (async ()=>{
+    try{
+      const ref = fsFns.doc(fsDb, 'ogdata', 'og-journal');
+      const snap = await fsFns.getDoc(ref);
+      return snap.exists() ? snap : null;
+    }catch(e){ return null; }
+  })();
   if(!check){ await saveKey('og-journal', state.journal); }
   renderAll();
 
