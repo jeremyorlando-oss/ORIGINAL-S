@@ -789,7 +789,12 @@ async function initFirebase(){
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
   const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
   const app = initializeApp(firebaseConfig);
-  fsDb = fsMod.getFirestore(app);
+  // Force le "long polling" : évite le canal temps réel bloqué par certains
+  // bloqueurs de pub / protections anti-tracking de Safari.
+  fsDb = fsMod.initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    useFetchStreams: false
+  });
   fsFns = fsMod;
 }
 
