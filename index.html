@@ -506,6 +506,8 @@
 
       <div class="ticket" style="margin-bottom:20px;">
         <div class="t-head"><span>Valeur du stock</span><span id="stock-value-date"></span></div>
+        <div class="t-row"><span class="lbl">Stock alimentaire</span><span class="val" id="stock-value-alimentaire">—</span></div>
+        <div class="t-row"><span class="lbl">Stock matériel</span><span class="val" id="stock-value-materiel">—</span></div>
         <div class="t-row total"><span class="lbl">Valeur totale (stock × coût)</span><span class="val" id="stock-total-value">—</span></div>
         <div class="t-foot">ORIGINAL'S COMPLETOS · CHE-273.472.459 · BUSSIGNY</div>
       </div>
@@ -518,7 +520,7 @@
         </div>
       </div>
       <div class="card" id="import-form-card" style="display:none;">
-        <div class="banner">Une ligne par ingrédient, format : <code>Nom;Unité;Stock;Coût unitaire</code>. Unités valables : pièce, g, kg, ml, l. Ton stock de base (Prodega, épicerie, emballages, pain/saucisse, sauces) est déjà chargé — utilise ce champ pour tes prochaines livraisons.</div>
+        <div class="banner">Une ligne par ingrédient, format : <code>Nom;Unité;Stock;Coût unitaire;Catégorie</code>. Unités valables : pièce, g, kg, ml, l. Catégorie : Alimentaire ou Matériel.</div>
         <textarea id="import-textarea" rows="16" style="font-family:'IBM Plex Mono',monospace;font-size:12px;"></textarea>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn btn-primary" id="btn-do-import">Importer ces lignes</button>
@@ -528,6 +530,9 @@
       <div class="card" id="ing-form-card" style="display:none;">
         <div class="form-grid">
           <div class="field"><label>Nom</label><input type="text" id="ing-nom" placeholder="ex. Saucisse de volaille"></div>
+          <div class="field"><label>Catégorie</label>
+            <select id="ing-categorie"><option>Alimentaire</option><option>Matériel</option></select>
+          </div>
           <div class="field"><label>Unité</label>
             <select id="ing-unite"><option>pièce</option><option>g</option><option>kg</option><option>ml</option><option>l</option></select>
           </div>
@@ -540,11 +545,20 @@
           <button class="btn btn-outline" id="btn-cancel-ing">Annuler</button>
         </div>
       </div>
+
+      <h2 class="section-title" style="margin-top:22px;"><span>Stock alimentaire</span><span class="rule"></span></h2>
       <div class="card tbl-wrap" style="padding:0;">
         <table class="tbl"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Stock actuel</th><th class="num">Coût unitaire</th><th class="num">Seuil</th><th></th></tr></thead>
-        <tbody id="ing-body"></tbody></table>
+        <tbody id="ing-body-alimentaire"></tbody></table>
       </div>
-      <div class="empty" id="ing-empty" style="display:none;margin-top:10px;">Aucun ingrédient enregistré.</div>
+      <div class="empty" id="ing-empty-alimentaire" style="display:none;margin-top:10px;">Aucun ingrédient alimentaire enregistré.</div>
+
+      <h2 class="section-title" style="margin-top:26px;"><span>Stock matériel</span><span class="rule"></span></h2>
+      <div class="card tbl-wrap" style="padding:0;">
+        <table class="tbl"><thead><tr><th>Ingrédient</th><th>Unité</th><th class="num">Stock actuel</th><th class="num">Coût unitaire</th><th class="num">Seuil</th><th></th></tr></thead>
+        <tbody id="ing-body-materiel"></tbody></table>
+      </div>
+      <div class="empty" id="ing-empty-materiel" style="display:none;margin-top:10px;">Aucun matériel enregistré.</div>
 
       <div class="toggle-add" style="margin-top:30px;">
         <h2 class="section-title" style="margin:0;"><span>Produits & recettes</span></h2>
@@ -685,40 +699,40 @@ document.getElementById('user-badge-btn').addEventListener('click', ()=>{
    ============================================================ */
 
 const SEED_INGREDIENTS = [
-  {nom:'Jus de citron concentré', unite:'l', stock:1, cout:2.90},
-  {nom:'Huile de friture', unite:'l', stock:40, cout:3.78},
-  {nom:'Moutarde douce', unite:'kg', stock:0.97, cout:4.28},
-  {nom:'Mayonnaise', unite:'kg', stock:9.5, cout:4.16},
-  {nom:'Ketchup', unite:'kg', stock:5, cout:3.83},
-  {nom:'Cumin moulu', unite:'kg', stock:0.35, cout:26.00},
-  {nom:'Oignons hachés', unite:'kg', stock:0.37, cout:18.78},
-  {nom:'Oignons frits', unite:'kg', stock:2.5, cout:7.12},
-  {nom:'Ail granulés', unite:'kg', stock:0.55, cout:19.27},
-  {nom:'Paprika doux', unite:'kg', stock:0.38, cout:16.71},
-  {nom:'Jalapeños verts coupés', unite:'kg', stock:2.75, cout:5.00},
-  {nom:'Haricots rouges', unite:'kg', stock:3.1, cout:3.97},
-  {nom:'Tex Mex Mix Chedd. Mozz', unite:'kg', stock:0.75, cout:13.20},
-  {nom:'Chou rouge', unite:'kg', stock:1.422, cout:2.98},
-  {nom:'Tomates', unite:'kg', stock:6, cout:2.90},
-  {nom:'Pommes frites', unite:'kg', stock:20, cout:2.97},
-  {nom:'Bac GN 1/6 polycarbonate', unite:'pièce', stock:2, cout:5.95},
-  {nom:'Flacon doseur 236ml', unite:'pièce', stock:1, cout:2.50},
-  {nom:'Flacon doseur 710ml', unite:'pièce', stock:11, cout:3.50},
-  {nom:'Film alu Refill PE', unite:'pièce', stock:1, cout:5.40},
-  {nom:'Gants nitrile L (100pc)', unite:'pièce', stock:1, cout:8.90},
-  {nom:'Sucre', unite:'kg', stock:0, cout:1.00},
-  {nom:'Sel', unite:'kg', stock:0, cout:1.05},
-  {nom:'Sauce Worcestershire', unite:'l', stock:0, cout:18.33},
-  {nom:'Ciboulette', unite:'kg', stock:0.2, cout:48.00},
-  {nom:'Emballage Completo', unite:'pièce', stock:900, cout:0.1774},
-  {nom:'Sticker Completo', unite:'pièce', stock:800, cout:0.04321},
-  {nom:'Saucisse de Vienne', unite:'pièce', stock:580, cout:0.55},
-  {nom:'Pain', unite:'pièce', stock:0, cout:0.78},
-  {nom:'Guacamole', unite:'kg', stock:0, cout:11.90},
-  {nom:'Oignons frais (brunoise)', unite:'kg', stock:0, cout:1.45},
-  {nom:'Doritos Cheese', unite:'kg', stock:0, cout:25.27},
-  {nom:"Sauce Original's", unite:'kg', stock:0, cout:4.72},
-  {nom:"Sauce Jalapeños Original's", unite:'kg', stock:0, cout:4.32},
+  {nom:'Jus de citron concentré', unite:'l', stock:1, cout:2.90, categorie:'Alimentaire'},
+  {nom:'Huile de friture', unite:'l', stock:40, cout:3.78, categorie:'Alimentaire'},
+  {nom:'Moutarde douce', unite:'kg', stock:0.97, cout:4.28, categorie:'Alimentaire'},
+  {nom:'Mayonnaise', unite:'kg', stock:9.5, cout:4.16, categorie:'Alimentaire'},
+  {nom:'Ketchup', unite:'kg', stock:5, cout:3.83, categorie:'Alimentaire'},
+  {nom:'Cumin moulu', unite:'kg', stock:0.35, cout:26.00, categorie:'Alimentaire'},
+  {nom:'Oignons hachés', unite:'kg', stock:0.37, cout:18.78, categorie:'Alimentaire'},
+  {nom:'Oignons frits', unite:'kg', stock:2.5, cout:7.12, categorie:'Alimentaire'},
+  {nom:'Ail granulés', unite:'kg', stock:0.55, cout:19.27, categorie:'Alimentaire'},
+  {nom:'Paprika doux', unite:'kg', stock:0.38, cout:16.71, categorie:'Alimentaire'},
+  {nom:'Jalapeños verts coupés', unite:'kg', stock:2.75, cout:5.00, categorie:'Alimentaire'},
+  {nom:'Haricots rouges', unite:'kg', stock:3.1, cout:3.97, categorie:'Alimentaire'},
+  {nom:'Tex Mex Mix Chedd. Mozz', unite:'kg', stock:0.75, cout:13.20, categorie:'Alimentaire'},
+  {nom:'Chou rouge', unite:'kg', stock:1.422, cout:2.98, categorie:'Alimentaire'},
+  {nom:'Tomates', unite:'kg', stock:6, cout:2.90, categorie:'Alimentaire'},
+  {nom:'Pommes frites', unite:'kg', stock:20, cout:2.97, categorie:'Alimentaire'},
+  {nom:'Bac GN 1/6 polycarbonate', unite:'pièce', stock:2, cout:5.95, categorie:'Matériel'},
+  {nom:'Flacon doseur 236ml', unite:'pièce', stock:1, cout:2.50, categorie:'Matériel'},
+  {nom:'Flacon doseur 710ml', unite:'pièce', stock:11, cout:3.50, categorie:'Matériel'},
+  {nom:'Film alu Refill PE', unite:'pièce', stock:1, cout:5.40, categorie:'Matériel'},
+  {nom:'Gants nitrile L (100pc)', unite:'pièce', stock:1, cout:8.90, categorie:'Matériel'},
+  {nom:'Sucre', unite:'kg', stock:0, cout:1.00, categorie:'Alimentaire'},
+  {nom:'Sel', unite:'kg', stock:0, cout:1.05, categorie:'Alimentaire'},
+  {nom:'Sauce Worcestershire', unite:'l', stock:0, cout:18.33, categorie:'Alimentaire'},
+  {nom:'Ciboulette', unite:'kg', stock:0.2, cout:48.00, categorie:'Alimentaire'},
+  {nom:'Emballage Completo', unite:'pièce', stock:900, cout:0.1774, categorie:'Matériel'},
+  {nom:'Sticker Completo', unite:'pièce', stock:800, cout:0.04321, categorie:'Matériel'},
+  {nom:'Saucisse de Vienne', unite:'pièce', stock:580, cout:0.55, categorie:'Alimentaire'},
+  {nom:'Pain', unite:'pièce', stock:0, cout:0.78, categorie:'Alimentaire'},
+  {nom:'Guacamole', unite:'kg', stock:0, cout:11.90, categorie:'Alimentaire'},
+  {nom:'Oignons frais (brunoise)', unite:'kg', stock:0, cout:1.45, categorie:'Alimentaire'},
+  {nom:'Doritos Cheese', unite:'kg', stock:0, cout:25.27, categorie:'Alimentaire'},
+  {nom:"Sauce Original's", unite:'kg', stock:0, cout:4.72, categorie:'Alimentaire'},
+  {nom:"Sauce Jalapeños Original's", unite:'kg', stock:0, cout:4.32, categorie:'Alimentaire'},
 ];
 
 const SEED_PRODUITS = ['Classic', 'Original', 'Royal', 'Spicy'];
@@ -1450,13 +1464,15 @@ document.getElementById('btn-do-import').addEventListener('click', async ()=>{
   lines.forEach(line=>{
     const parts = line.split(';').map(p=>p.trim());
     if(parts.length < 4){ skipped++; return; }
-    const [nom, unite, stock, cout] = parts;
+    const [nom, unite, stock, cout, categorieRaw] = parts;
     if(!nom || !UNITES.includes(unite)){ skipped++; return; }
+    const categorie = (categorieRaw && categorieRaw.toLowerCase().startsWith('mat')) ? 'Matériel' : 'Alimentaire';
     state.ingredients.push(withId({
       nom, unite,
       stock: parseFloat(stock)||0,
       cout: parseFloat(cout)||0,
-      seuil: null
+      seuil: null,
+      categorie
     }));
     added++;
   });
@@ -1473,6 +1489,7 @@ document.getElementById('btn-open-ing').addEventListener('click', ()=>{
   editingIngredientId = null;
   ['ing-nom','ing-stock','ing-cout','ing-seuil'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ing-unite').value = 'pièce';
+  document.getElementById('ing-categorie').value = 'Alimentaire';
   document.getElementById('btn-save-ing').textContent = 'Enregistrer';
   const c = document.getElementById('ing-form-card');
   c.style.display = c.style.display==='none'?'block':'none';
@@ -1486,6 +1503,7 @@ document.getElementById('btn-save-ing').addEventListener('click', async ()=>{
   if(!nom){ alert('Merci de donner un nom à l\'ingrédient.'); return; }
   const data = {
     nom, unite: document.getElementById('ing-unite').value,
+    categorie: document.getElementById('ing-categorie').value,
     stock: parseFloat(document.getElementById('ing-stock').value)||0,
     cout: parseFloat(document.getElementById('ing-cout').value)||0,
     seuil: document.getElementById('ing-seuil').value ? parseFloat(document.getElementById('ing-seuil').value) : null
@@ -1508,10 +1526,11 @@ function fmtQty(v, unite){
   return n.toLocaleString('fr-CH',{maximumFractionDigits:2})+' '+unite;
 }
 
-function renderIngredients(){
-  const rows = [...state.ingredients].sort((a,b)=>a.nom.localeCompare(b.nom));
-  document.getElementById('ing-empty').style.display = rows.length? 'none':'block';
-  document.getElementById('ing-body').innerHTML = rows.map(i=>{
+function renderIngredientsGroup(categorie, tbodyId, emptyId){
+  const rows = state.ingredients.filter(i=>(i.categorie||'Alimentaire')===categorie).sort((a,b)=>a.nom.localeCompare(b.nom));
+  document.getElementById(emptyId).style.display = rows.length? 'none':'block';
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = rows.map(i=>{
     const bas = i.seuil!=null && Number(i.stock) <= Number(i.seuil);
     return `<tr>
       <td>${i.nom}</td><td>${i.unite}</td>
@@ -1524,13 +1543,14 @@ function renderIngredients(){
       </div></td>
     </tr>`;
   }).join('');
-  document.getElementById('ing-body').querySelectorAll('[data-ingedit]').forEach(btn=>{
+  tbody.querySelectorAll('[data-ingedit]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const ing = state.ingredients.find(i=>i.id===btn.dataset.ingedit);
       if(!ing) return;
       editingIngredientId = ing.id;
       document.getElementById('ing-nom').value = ing.nom;
       document.getElementById('ing-unite').value = ing.unite;
+      document.getElementById('ing-categorie').value = ing.categorie || 'Alimentaire';
       document.getElementById('ing-stock').value = ing.stock;
       document.getElementById('ing-cout').value = ing.cout || '';
       document.getElementById('ing-seuil').value = ing.seuil!=null ? ing.seuil : '';
@@ -1540,7 +1560,7 @@ function renderIngredients(){
       card.scrollIntoView({behavior:'smooth', block:'center'});
     });
   });
-  document.getElementById('ing-body').querySelectorAll('[data-ingdel]').forEach(btn=>{
+  tbody.querySelectorAll('[data-ingdel]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Supprimer cet ingrédient ? Les lignes de recette associées seront aussi retirées.')) return;
       const id = btn.dataset.ingdel;
@@ -1551,6 +1571,11 @@ function renderIngredients(){
       renderStocks();
     });
   });
+}
+
+function renderIngredients(){
+  renderIngredientsGroup('Alimentaire', 'ing-body-alimentaire', 'ing-empty-alimentaire');
+  renderIngredientsGroup('Matériel', 'ing-body-materiel', 'ing-empty-materiel');
 }
 
 document.getElementById('btn-open-prod').addEventListener('click', ()=>{
@@ -1711,8 +1736,14 @@ document.getElementById('btn-deduct-stock').addEventListener('click', async ()=>
 });
 
 function renderStockTotalValue(){
-  const total = state.ingredients.reduce((s,i)=> s + (Number(i.stock)||0) * (Number(i.cout)||0), 0);
-  document.getElementById('stock-total-value').textContent = chf(total);
+  const valeur = (categorie) => state.ingredients
+    .filter(i=>(i.categorie||'Alimentaire')===categorie)
+    .reduce((s,i)=> s + (Number(i.stock)||0) * (Number(i.cout)||0), 0);
+  const alim = valeur('Alimentaire');
+  const mat = valeur('Matériel');
+  document.getElementById('stock-value-alimentaire').textContent = chf(alim);
+  document.getElementById('stock-value-materiel').textContent = chf(mat);
+  document.getElementById('stock-total-value').textContent = chf(alim + mat);
   document.getElementById('stock-value-date').textContent = new Date().toLocaleDateString('fr-CH');
 }
 
