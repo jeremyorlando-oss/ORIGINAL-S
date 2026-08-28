@@ -560,6 +560,37 @@
       </div>
       <div class="empty" id="ing-empty-materiel" style="display:none;margin-top:10px;">Aucun matériel enregistré.</div>
 
+      <h2 class="section-title" style="margin-top:36px;"><span>Matériel acquis (équipement)</span><span class="rule"></span></h2>
+      <div class="banner">Registre séparé du stock ci-dessus — tente, matériel de caisse, rallonges, etc. Sert uniquement à connaître la valeur de votre équipement (utile pour estimer la valeur du concept) ; n'entre jamais dans le calculateur de commande.</div>
+
+      <div class="ticket" style="margin-bottom:16px;">
+        <div class="t-head"><span>Valeur de l'équipement</span><span id="equip-value-date"></span></div>
+        <div class="t-row total"><span class="lbl">Valeur totale du matériel acquis</span><span class="val" id="equip-total-value">—</span></div>
+        <div class="t-foot">ORIGINAL'S COMPLETOS · CHE-273.472.459 · BUSSIGNY</div>
+      </div>
+
+      <div class="toggle-add">
+        <h2 class="section-title" style="margin:0;font-size:13px;"><span>Détail</span></h2>
+        <button class="btn btn-outline" id="btn-open-equip">+ Ajouter</button>
+      </div>
+      <div class="card" id="equip-form-card" style="display:none;">
+        <div class="form-grid">
+          <div class="field"><label>Nom</label><input type="text" id="equip-nom" placeholder="ex. Tente 3x3m"></div>
+          <div class="field"><label>Quantité</label><input type="number" step="1" id="equip-qte" value="1"></div>
+          <div class="field"><label>Valeur unitaire (CHF)</label><input type="number" step="0.01" id="equip-valeur" placeholder="0.00"></div>
+          <div class="field full"><label>Note (optionnel)</label><input type="text" id="equip-note" placeholder="ex. acheté d'occasion, état, date"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-primary" id="btn-save-equip">Enregistrer</button>
+          <button class="btn btn-outline" id="btn-cancel-equip">Annuler</button>
+        </div>
+      </div>
+      <div class="card tbl-wrap" style="padding:0;">
+        <table class="tbl"><thead><tr><th>Nom</th><th class="num">Quantité</th><th class="num">Valeur unitaire</th><th class="num">Valeur totale</th><th>Note</th><th></th></tr></thead>
+        <tbody id="equip-body"></tbody></table>
+      </div>
+      <div class="empty" id="equip-empty" style="display:none;margin-top:10px;">Aucun matériel acquis enregistré.</div>
+
       <div class="toggle-add" style="margin-top:30px;">
         <h2 class="section-title" style="margin:0;"><span>Produits & recettes</span></h2>
         <button class="btn btn-outline" id="btn-open-prod">+ Nouveau produit</button>
@@ -627,7 +658,7 @@ const COMPANY = {
 
 const SEED_JOURNAL = [{"date": "2026-05-29", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Inscription au registre du commerce", "montant": 290.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Aligro - achats test menu", "montant": 41.4, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - achats test menu", "montant": 22.15, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - achats shooting menu", "montant": 3.6, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Aligro - achats test menu", "montant": 2.85, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 10.2, "payeur": "Tschanz", "moyen": "Twint"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 5.15, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-03", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - abonnement téléphone", "montant": 12.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-15", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 11.55, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-06-29", "event": "LAFF Festival", "type": "Dépense", "categorie": "Location stand", "description": "LAFF - emplacement ", "montant": 2000.0, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-07-02", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - Abonnement téléphone", "montant": 12.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-20", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - SumUp Solo", "montant": 29.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-24", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Temu - Articles divers ", "montant": 63.32, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-26", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Gonser - tente noire", "montant": 114.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-28", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Temu - Stickers", "montant": 34.57, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-28", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Alimentarios.es - emballage completos", "montant": 159.67, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - Abonnement téléphone", "montant": 11.95, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Atelier Gamarra - uniforme", "montant": 300.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Lidl - éclairage", "montant": 9.99, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "SML Food - emballage plastique", "montant": 111.03, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-05", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Anthropic - abonnement Claude", "montant": 17.49, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-07", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "L'Entrepôt du Bricolage - matériel", "montant": 46.73, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-07", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "GIFI - matériel nettoyage", "montant": 5.05, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-09", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - tente blanche", "montant": 188.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-10", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 64.75, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-10", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "OBI - matériel", "montant": 56.75, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-11", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Brack - bâche de sol", "montant": 18.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-13", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 42.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-16", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - poubelle", "montant": 36.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-17", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Migros - matériel", "montant": 8.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-17", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Novaruta - livraison matériel", "montant": 120.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-18", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Maxi Bazar - matériel", "montant": 13.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-18", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 26.6, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Sixt - location camionnette", "montant": 170.43, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Location stand", "description": "OMA SMASH - location matériel", "montant": 500.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Carnadis - saucisse de volaille", "montant": 440.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-19", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 28.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Migrol - essence", "montant": 34.01, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Prodega - aliments", "montant": 480.4, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Prodega - aliments", "montant": 319.45, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 11.85, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Top Marché - aliments", "montant": 71.4, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 18.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 3.1, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "FNAC - matériel", "montant": 13.95, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-21", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "SumUp - festival LAFF", "montant": 67.9, "payeur": "Entreprise", "moyen": "Carte"}, {"date": "2026-08-23", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "NF Location - location camionnette", "montant": 180.0, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-08-23", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 23.6, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-24", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Eni - essence", "montant": 28.5, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-24", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "SumUp - festival LAFF", "montant": 1091.69, "payeur": "Entreprise", "moyen": "Carte"}, {"date": "2026-08-26", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "Cash - festival LAFF", "montant": 785.4, "payeur": "Entreprise", "moyen": "Carte"}];
 
-let state = { journal: [], ajustements: [], remboursements: [], contrats: [], ingredients: [], produits: [], recette: [] };
+let state = { journal: [], ajustements: [], remboursements: [], contrats: [], ingredients: [], produits: [], recette: [], equipements: [] };
 let currentUser = null;
 const ACCESS_CODE = '646464';
 
@@ -820,6 +851,7 @@ async function loadAll(){
   state.ingredients = await loadKey('og-ingredients', SEED_INGREDIENTS.map(withId));
   state.produits = await loadKey('og-produits', SEED_PRODUITS.map(nom=>withId({nom})));
   state.recette = await loadKey('og-recette', buildSeedRecette(state.ingredients, state.produits));
+  state.equipements = await loadKey('og-equipements', []);
 }
 async function loadKey(key, fallback){
   try{
@@ -1578,6 +1610,90 @@ function renderIngredients(){
   renderIngredientsGroup('Matériel', 'ing-body-materiel', 'ing-empty-materiel');
 }
 
+/* ============================================================
+   MATÉRIEL ACQUIS (équipement — registre séparé, hors calculateur)
+   ============================================================ */
+let editingEquipId = null;
+
+document.getElementById('btn-open-equip').addEventListener('click', ()=>{
+  editingEquipId = null;
+  ['equip-nom','equip-valeur','equip-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('equip-qte').value = '1';
+  document.getElementById('btn-save-equip').textContent = 'Enregistrer';
+  const c = document.getElementById('equip-form-card');
+  c.style.display = c.style.display==='none' ? 'block' : 'none';
+});
+document.getElementById('btn-cancel-equip').addEventListener('click', ()=>{
+  document.getElementById('equip-form-card').style.display='none';
+  editingEquipId = null;
+});
+document.getElementById('btn-save-equip').addEventListener('click', async ()=>{
+  const nom = document.getElementById('equip-nom').value.trim();
+  if(!nom){ alert('Merci de donner un nom.'); return; }
+  const data = {
+    nom,
+    qte: parseFloat(document.getElementById('equip-qte').value)||1,
+    valeur: parseFloat(document.getElementById('equip-valeur').value)||0,
+    note: document.getElementById('equip-note').value.trim()
+  };
+  if(editingEquipId){
+    const idx = state.equipements.findIndex(e=>e.id===editingEquipId);
+    if(idx>-1) state.equipements[idx] = Object.assign({id: editingEquipId}, data);
+  } else {
+    state.equipements.push(withId(data));
+  }
+  await saveKey('og-equipements', state.equipements);
+  document.getElementById('equip-form-card').style.display='none';
+  editingEquipId = null;
+  renderEquipements();
+});
+
+function renderEquipements(){
+  const rows = [...state.equipements].sort((a,b)=>a.nom.localeCompare(b.nom));
+  document.getElementById('equip-empty').style.display = rows.length? 'none':'block';
+  const tbody = document.getElementById('equip-body');
+  tbody.innerHTML = rows.map(e=>{
+    const total = (Number(e.qte)||0) * (Number(e.valeur)||0);
+    return `<tr>
+      <td>${e.nom}</td>
+      <td class="num">${e.qte}</td>
+      <td class="num">${chf(e.valeur)}</td>
+      <td class="num" style="font-weight:600;">${chf(total)}</td>
+      <td>${e.note||''}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-equipedit="${e.id}" title="Modifier">✎</button>
+        <button class="icon-btn" data-equipdel="${e.id}" title="Supprimer">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('[data-equipedit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const eq = state.equipements.find(e=>e.id===btn.dataset.equipedit);
+      if(!eq) return;
+      editingEquipId = eq.id;
+      document.getElementById('equip-nom').value = eq.nom;
+      document.getElementById('equip-qte').value = eq.qte;
+      document.getElementById('equip-valeur').value = eq.valeur;
+      document.getElementById('equip-note').value = eq.note||'';
+      document.getElementById('btn-save-equip').textContent = 'Mettre à jour';
+      const card = document.getElementById('equip-form-card');
+      card.style.display = 'block';
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
+  tbody.querySelectorAll('[data-equipdel]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Supprimer cet équipement ?')) return;
+      state.equipements = state.equipements.filter(e=>e.id!==btn.dataset.equipdel);
+      await saveKey('og-equipements', state.equipements);
+      renderEquipements();
+    });
+  });
+  const total = rows.reduce((s,e)=> s + (Number(e.qte)||0)*(Number(e.valeur)||0), 0);
+  document.getElementById('equip-total-value').textContent = chf(total);
+  document.getElementById('equip-value-date').textContent = new Date().toLocaleDateString('fr-CH');
+}
+
 document.getElementById('btn-open-prod').addEventListener('click', ()=>{
   const c = document.getElementById('prod-form-card');
   c.style.display = c.style.display==='none'?'block':'none';
@@ -1752,6 +1868,7 @@ function renderStocks(){
   renderProduits();
   renderCalcInputs();
   renderStockTotalValue();
+  renderEquipements();
 }
 
 /* ============================================================
