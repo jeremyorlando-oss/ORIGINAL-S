@@ -675,7 +675,7 @@
    DONNÉES / CONSTANTES
    ============================================================ */
 const CAT_RECETTES = ["Ventes stand","Prestations événementielles","Autres recettes"];
-const CAT_DEPENSES = ["Matières premières","Matériel","Location stand","Transport","Assurances","Divers"];
+const CAT_DEPENSES = ["Matières premières","Matériel","Location stand","Transport","Assurances","Commissions bancaires","Abonnements & logiciels","Divers"];
 const PAYEURS = ["Quispe","Tschanz","Entreprise"];
 const MOYENS = ["Cash","Carte"];
 const SEUIL_TVA = 100000;
@@ -1181,35 +1181,50 @@ document.getElementById('f-type').addEventListener('change', e=>{
 });
 populateCatSelect(document.getElementById('f-cat'), 'Dépense');
 
+let editingJournalId = null;
+
 document.getElementById('btn-open-add').addEventListener('click', ()=>{
+  editingJournalId = null;
+  document.getElementById('f-date').valueAsDate = new Date();
+  document.getElementById('f-event').value = '';
+  document.getElementById('f-type').value = 'Dépense';
+  populateCatSelect(document.getElementById('f-cat'), 'Dépense');
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-montant').value = '';
+  document.getElementById('f-payeur').value = 'Entreprise';
+  document.getElementById('f-moyen').value = 'Carte';
+  document.getElementById('btn-save-entry').textContent = 'Enregistrer';
   const card = document.getElementById('add-form-card');
-  const opening = card.style.display==='none';
-  card.style.display = opening ? 'block' : 'none';
-  if(opening){
-    document.getElementById('f-date').valueAsDate = new Date();
-    document.getElementById('f-payeur').value = 'Entreprise';
-    document.getElementById('f-moyen').value = 'Carte';
-  }
+  card.style.display = card.style.display==='none' ? 'block' : 'none';
 });
 document.getElementById('btn-cancel-entry').addEventListener('click', ()=>{
   document.getElementById('add-form-card').style.display='none';
+  editingJournalId = null;
 });
 document.getElementById('btn-save-entry').addEventListener('click', async ()=>{
   const montant = parseFloat(document.getElementById('f-montant').value);
   const date = document.getElementById('f-date').value;
   if(!date || isNaN(montant)){ alert('Merci de renseigner au moins la date et le montant.'); return; }
-  const entry = withId({
+  const data = {
     date, event: document.getElementById('f-event').value.trim(),
     type: document.getElementById('f-type').value,
     categorie: document.getElementById('f-cat').value,
     description: document.getElementById('f-desc').value.trim(),
     montant, payeur: document.getElementById('f-payeur').value,
-    moyen: document.getElementById('f-moyen').value,
-    saisiPar: currentUser || ''
-  });
-  state.journal.push(entry);
+    moyen: document.getElementById('f-moyen').value
+  };
+  if(editingJournalId){
+    const idx = state.journal.findIndex(e=>e.id===editingJournalId);
+    if(idx>-1){
+      const prev = state.journal[idx];
+      state.journal[idx] = Object.assign({id: editingJournalId, saisiPar: prev.saisiPar}, data);
+    }
+  } else {
+    state.journal.push(withId(Object.assign({saisiPar: currentUser || ''}, data)));
+  }
   await saveKey('og-journal', state.journal);
   document.getElementById('add-form-card').style.display='none';
+  editingJournalId = null;
   ['f-event','f-desc','f-montant'].forEach(id=>document.getElementById(id).value='');
   renderAll();
 });
@@ -1229,8 +1244,31 @@ function renderJournal(){
       <td>${e.payeur||''}</td>
       <td>${e.moyen||''}</td>
       <td style="color:var(--steel);font-size:12px;">${e.saisiPar||'—'}</td>
-      <td><div class="row-actions"><button class="icon-btn" data-del="${e.id}" title="Supprimer">✕</button></div></td>
+      <td><div class="row-actions">
+        <button class="icon-btn" data-jedit="${e.id}" title="Modifier">✎</button>
+        <button class="icon-btn" data-del="${e.id}" title="Supprimer">✕</button>
+      </div></td>
     </tr>`).join('');
+  body.querySelectorAll('[data-jedit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const e = state.journal.find(x=>x.id===btn.dataset.jedit);
+      if(!e) return;
+      editingJournalId = e.id;
+      document.getElementById('f-date').value = e.date;
+      document.getElementById('f-event').value = e.event||'';
+      document.getElementById('f-type').value = e.type;
+      populateCatSelect(document.getElementById('f-cat'), e.type);
+      document.getElementById('f-cat').value = e.categorie||'';
+      document.getElementById('f-desc').value = e.description||'';
+      document.getElementById('f-montant').value = e.montant;
+      document.getElementById('f-payeur').value = e.payeur||'Entreprise';
+      document.getElementById('f-moyen').value = e.moyen||'Carte';
+      document.getElementById('btn-save-entry').textContent = 'Mettre à jour';
+      const card = document.getElementById('add-form-card');
+      card.style.display = 'block';
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
   body.querySelectorAll('[data-del]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       if(!confirm('Supprimer cette écriture ?')) return;
