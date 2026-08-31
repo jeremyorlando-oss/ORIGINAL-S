@@ -372,6 +372,39 @@
         </table>
       </div>
 
+      <h2 class="section-title" style="font-size:13px;margin-top:18px;"><span>Ventes par produit et par événement</span><span class="rule"></span></h2>
+      <div class="toggle-add">
+        <div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline" id="btn-open-vente-import">Import groupé</button>
+          <button class="btn btn-outline" id="btn-open-vente">+ Ajouter</button>
+        </div>
+      </div>
+      <div class="card" id="vente-import-card" style="display:none;">
+        <div class="form-grid">
+          <div class="field full"><label>Événement</label><input type="text" id="vente-import-evenement" placeholder="ex. LAFF Festival"></div>
+        </div>
+        <div class="banner" style="margin-top:10px;">Une ligne par produit, format : <code>Produit;Quantité</code>. Un produit qui n'existe pas encore est créé automatiquement (sans recette).</div>
+        <textarea id="vente-import-textarea" rows="8" style="font-family:'IBM Plex Mono',monospace;font-size:12px;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-primary" id="btn-do-vente-import">Importer ces lignes</button>
+          <button class="btn btn-outline" id="btn-cancel-vente-import">Annuler</button>
+        </div>
+      </div>
+      <div class="card" id="vente-form-card" style="display:none;">
+        <div class="form-grid">
+          <div class="field"><label>Événement</label><input type="text" id="vente-evenement" placeholder="ex. LAFF Festival"></div>
+          <div class="field"><label>Produit</label><select id="vente-produit"></select></div>
+          <div class="field"><label>Quantité vendue</label><input type="number" step="1" id="vente-qte" value="1"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-primary" id="btn-save-vente">Enregistrer</button>
+          <button class="btn btn-outline" id="btn-cancel-vente">Annuler</button>
+        </div>
+      </div>
+      <div class="card tbl-wrap" id="ventes-wrap" style="padding:0;"></div>
+      <div class="empty" id="ventes-empty" style="display:none;margin-top:10px;">Aucune vente par produit enregistrée.</div>
+
     </section>
 
     <!-- ================= JOURNAL ================= -->
@@ -658,7 +691,7 @@ const COMPANY = {
 
 const SEED_JOURNAL = [{"date": "2026-05-29", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Inscription au registre du commerce", "montant": 290.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Aligro - achats test menu", "montant": 41.4, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - achats test menu", "montant": 22.15, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-05-30", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - achats shooting menu", "montant": 3.6, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Aligro - achats test menu", "montant": 2.85, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 10.2, "payeur": "Tschanz", "moyen": "Twint"}, {"date": "2026-06-01", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 5.15, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-03", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - abonnement téléphone", "montant": 12.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-06-15", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - test menu", "montant": 11.55, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-06-29", "event": "LAFF Festival", "type": "Dépense", "categorie": "Location stand", "description": "LAFF - emplacement ", "montant": 2000.0, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-07-02", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - Abonnement téléphone", "montant": 12.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-20", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - SumUp Solo", "montant": 29.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-24", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Temu - Articles divers ", "montant": 63.32, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-26", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Gonser - tente noire", "montant": 114.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-28", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Temu - Stickers", "montant": 34.57, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-07-28", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "Alimentarios.es - emballage completos", "montant": 159.67, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Salt - Abonnement téléphone", "montant": 11.95, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Atelier Gamarra - uniforme", "montant": 300.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Lidl - éclairage", "montant": 9.99, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-04", "event": "", "type": "Dépense", "categorie": "Matières premières", "description": "SML Food - emballage plastique", "montant": 111.03, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-05", "event": "", "type": "Dépense", "categorie": "Divers", "description": "Anthropic - abonnement Claude", "montant": 17.49, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-07", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "L'Entrepôt du Bricolage - matériel", "montant": 46.73, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-07", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "GIFI - matériel nettoyage", "montant": 5.05, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-09", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - tente blanche", "montant": 188.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-10", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 64.75, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-10", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "OBI - matériel", "montant": 56.75, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-11", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Brack - bâche de sol", "montant": 18.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-13", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 42.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-16", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Galaxus - poubelle", "montant": 36.9, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-17", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Migros - matériel", "montant": 8.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-17", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Novaruta - livraison matériel", "montant": 120.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-18", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Maxi Bazar - matériel", "montant": 13.0, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-18", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 26.6, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Sixt - location camionnette", "montant": 170.43, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Location stand", "description": "OMA SMASH - location matériel", "montant": 500.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-19", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Carnadis - saucisse de volaille", "montant": 440.0, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-19", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "Jumbo - matériel", "montant": 28.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Migrol - essence", "montant": 34.01, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Prodega - aliments", "montant": 480.4, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Prodega - aliments", "montant": 319.45, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 11.85, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Top Marché - aliments", "montant": 71.4, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 18.8, "payeur": "Quispe", "moyen": "Carte"}, {"date": "2026-08-20", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 3.1, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-20", "event": "", "type": "Dépense", "categorie": "Matériel", "description": "FNAC - matériel", "montant": 13.95, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-21", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "SumUp - festival LAFF", "montant": 67.9, "payeur": "Entreprise", "moyen": "Carte"}, {"date": "2026-08-23", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "NF Location - location camionnette", "montant": 180.0, "payeur": "Tschanz", "moyen": "Carte"}, {"date": "2026-08-23", "event": "LAFF Festival", "type": "Dépense", "categorie": "Matières premières", "description": "Migros - aliments", "montant": 23.6, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-24", "event": "LAFF Festival", "type": "Dépense", "categorie": "Transport", "description": "Eni - essence", "montant": 28.5, "payeur": "Quispe", "moyen": "Cash"}, {"date": "2026-08-24", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "SumUp - festival LAFF", "montant": 1091.69, "payeur": "Entreprise", "moyen": "Carte"}, {"date": "2026-08-26", "event": "LAFF Festival", "type": "Recette", "categorie": "Ventes stand", "description": "Cash - festival LAFF", "montant": 785.4, "payeur": "Entreprise", "moyen": "Carte"}];
 
-let state = { journal: [], ajustements: [], remboursements: [], contrats: [], ingredients: [], produits: [], recette: [], equipements: [] };
+let state = { journal: [], ajustements: [], remboursements: [], contrats: [], ingredients: [], produits: [], recette: [], equipements: [], ventes: [] };
 let currentUser = null;
 const ACCESS_CODE = '646464';
 
@@ -851,7 +884,17 @@ async function loadAll(){
   state.ingredients = await loadKey('og-ingredients', SEED_INGREDIENTS.map(withId));
   state.produits = await loadKey('og-produits', SEED_PRODUITS.map(nom=>withId({nom})));
   state.recette = await loadKey('og-recette', buildSeedRecette(state.ingredients, state.produits));
+  // Auto-réparation : si les recettes sont vides (ex. sauvegarde vide antérieure), on
+  // recalcule depuis les recettes de référence et on persiste le résultat.
+  if(state.recette.length === 0){
+    const rebuilt = buildSeedRecette(state.ingredients, state.produits);
+    if(rebuilt.length > 0){
+      state.recette = rebuilt;
+      await saveKey('og-recette', state.recette);
+    }
+  }
   state.equipements = await loadKey('og-equipements', []);
+  state.ventes = await loadKey('og-ventes', []);
 }
 async function loadKey(key, fallback){
   try{
@@ -974,6 +1017,156 @@ function renderDashboard(){
     return `<tr><td>${ev}</td><td class="num pos">${chf(v.rec)}</td><td class="num neg">${chf(v.dep)}</td>
       <td class="num ${res>=0?'pos':'neg'}">${chf(res)}</td><td class="num">${marge.toFixed(1)}%</td></tr>`;
   }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--steel);">Aucun événement taggé</td></tr>';
+
+  renderVentes();
+}
+
+/* ============================================================
+   VENTES PAR PRODUIT ET PAR ÉVÉNEMENT
+   ============================================================ */
+let editingVenteId = null;
+
+function populateVenteProduitSelect(){
+  const sel = document.getElementById('vente-produit');
+  if(!sel) return;
+  sel.innerHTML = state.produits.map(p=>`<option value="${esc(p.nom)}">${esc(p.nom)}</option>`).join('');
+}
+
+document.getElementById('btn-open-vente-import').addEventListener('click', ()=>{
+  const c = document.getElementById('vente-import-card');
+  const opening = c.style.display==='none';
+  c.style.display = opening ? 'block' : 'none';
+  if(opening && !document.getElementById('vente-import-textarea').value){
+    document.getElementById('vente-import-evenement').value = 'LAFF Festival';
+    document.getElementById('vente-import-textarea').value =
+`Classic;86
+Frites;50
+Frites patates douces;24
+Original;59
+Royal;9
+Salchipapa;34
+Spicy;30`;
+  }
+});
+document.getElementById('btn-cancel-vente-import').addEventListener('click', ()=>{
+  document.getElementById('vente-import-card').style.display='none';
+});
+document.getElementById('btn-do-vente-import').addEventListener('click', async ()=>{
+  const evenement = document.getElementById('vente-import-evenement').value.trim();
+  const raw = document.getElementById('vente-import-textarea').value.trim();
+  if(!evenement){ alert('Merci de renseigner l\'événement.'); return; }
+  if(!raw){ alert('Rien à importer.'); return; }
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let added = 0, skipped = 0, produitsCrees = 0;
+  for(const line of lines){
+    const parts = line.split(';').map(p=>p.trim());
+    if(parts.length < 2){ skipped++; continue; }
+    const [produitNom, qteStr] = parts;
+    const qte = parseFloat(qteStr);
+    if(!produitNom || isNaN(qte) || qte<=0){ skipped++; continue; }
+    let prod = state.produits.find(p=>p.nom.toLowerCase()===produitNom.toLowerCase());
+    if(!prod){
+      prod = withId({nom: produitNom});
+      state.produits.push(prod);
+      produitsCrees++;
+    }
+    state.ventes.push(withId({evenement, produit: prod.nom, qte}));
+    added++;
+  }
+  await saveKey('og-produits', state.produits);
+  await saveKey('og-ventes', state.ventes);
+  document.getElementById('vente-import-card').style.display='none';
+  document.getElementById('vente-import-textarea').value='';
+  document.getElementById('vente-import-evenement').value='';
+  renderAll();
+  renderStocks();
+  alert(`${added} ligne(s) de vente importée(s)${produitsCrees? ', '+produitsCrees+' nouveau(x) produit(s) créé(s)':''}${skipped? ', '+skipped+' ligne(s) ignorée(s)':''}.`);
+});
+
+document.getElementById('btn-open-vente').addEventListener('click', ()=>{
+  editingVenteId = null;
+  populateVenteProduitSelect();
+  document.getElementById('vente-evenement').value='';
+  document.getElementById('vente-qte').value='1';
+  document.getElementById('btn-save-vente').textContent = 'Enregistrer';
+  const c = document.getElementById('vente-form-card');
+  c.style.display = c.style.display==='none' ? 'block' : 'none';
+});
+document.getElementById('btn-cancel-vente').addEventListener('click', ()=>{
+  document.getElementById('vente-form-card').style.display='none';
+  editingVenteId = null;
+});
+document.getElementById('btn-save-vente').addEventListener('click', async ()=>{
+  const evenement = document.getElementById('vente-evenement').value.trim();
+  const produit = document.getElementById('vente-produit').value;
+  const qte = parseFloat(document.getElementById('vente-qte').value)||0;
+  if(!evenement || !produit || qte<=0){ alert('Merci de renseigner l\'événement, le produit et une quantité valide.'); return; }
+  if(editingVenteId){
+    const idx = state.ventes.findIndex(v=>v.id===editingVenteId);
+    if(idx>-1) state.ventes[idx] = Object.assign({id: editingVenteId}, {evenement, produit, qte});
+  } else {
+    state.ventes.push(withId({evenement, produit, qte}));
+  }
+  await saveKey('og-ventes', state.ventes);
+  document.getElementById('vente-form-card').style.display='none';
+  editingVenteId = null;
+  renderVentes();
+});
+
+function renderVentes(){
+  const wrap = document.getElementById('ventes-wrap');
+  document.getElementById('ventes-empty').style.display = state.ventes.length? 'none':'block';
+  if(!state.ventes.length){ wrap.innerHTML=''; return; }
+
+  // Regrouper par événement
+  const parEvenement = {};
+  state.ventes.forEach(v=>{
+    if(!parEvenement[v.evenement]) parEvenement[v.evenement] = {};
+    parEvenement[v.evenement][v.produit] = (parEvenement[v.evenement][v.produit]||0) + Number(v.qte);
+  });
+
+  wrap.innerHTML = Object.entries(parEvenement).map(([ev, produits])=>{
+    const total = Object.values(produits).reduce((s,q)=>s+q,0);
+    const lignes = state.ventes.filter(v=>v.evenement===ev);
+    return `
+    <div style="padding:14px 16px;border-bottom:1px solid var(--steel-line);">
+      <div style="font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.3px;margin-bottom:8px;">${ev} <span style="color:var(--steel);font-weight:400;font-size:12px;">— ${total} vendus au total</span></div>
+      <table class="tbl" style="margin:0;">
+        <thead><tr><th>Produit</th><th class="num">Quantité vendue</th><th></th></tr></thead>
+        <tbody>
+          ${lignes.map(v=>`<tr><td>${v.produit}</td><td class="num">${v.qte}</td>
+            <td><div class="row-actions">
+              <button class="icon-btn" data-venteedit="${v.id}" title="Modifier">✎</button>
+              <button class="icon-btn" data-ventedel="${v.id}" title="Supprimer">✕</button>
+            </div></td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-venteedit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const v = state.ventes.find(x=>x.id===btn.dataset.venteedit);
+      if(!v) return;
+      editingVenteId = v.id;
+      populateVenteProduitSelect();
+      document.getElementById('vente-evenement').value = v.evenement;
+      document.getElementById('vente-produit').value = v.produit;
+      document.getElementById('vente-qte').value = v.qte;
+      document.getElementById('btn-save-vente').textContent = 'Mettre à jour';
+      const card = document.getElementById('vente-form-card');
+      card.style.display = 'block';
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+  });
+  wrap.querySelectorAll('[data-ventedel]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm('Supprimer cette ligne de vente ?')) return;
+      state.ventes = state.ventes.filter(v=>v.id!==btn.dataset.ventedel);
+      await saveKey('og-ventes', state.ventes);
+      renderVentes();
+    });
+  });
 }
 
 /* ============================================================
