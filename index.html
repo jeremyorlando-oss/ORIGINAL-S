@@ -352,24 +352,15 @@ body.privacy-mode .marge-num{
   </div>
 </div>
 
-<div id="code-overlay">
-  <div class="code-box">
-    <div class="mark" style="margin-bottom:4px;">Original's Completos</div>
-    <div class="sub" style="margin-bottom:26px;">Comptabilité, contrats & stocks</div>
-    <div class="q" style="margin-bottom:14px;">Code d'accès</div>
-    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" class="code-input" id="code-input" placeholder="······" autocomplete="off">
-    <div class="code-error" id="code-error"></div>
-    <button class="who-btn" id="btn-code-submit" style="margin-bottom:0;">Valider</button>
-  </div>
-</div>
-
-<div id="login-overlay" class="hidden">
+<div id="login-overlay">
   <div class="login-box">
     <div class="mark">Original's Completos</div>
-    <div class="sub">Comptabilité, contrats & stocks</div>
-    <div class="q">Qui es-tu ?</div>
-    <button class="who-btn" data-user="Quispe">Quispe</button>
-    <button class="who-btn" data-user="Tschanz">Tschanz</button>
+    <div class="sub" style="margin-bottom:26px;">Comptabilité, contrats & stocks</div>
+    <div class="q" style="margin-bottom:14px;">Connexion</div>
+    <input type="email" class="code-input" id="login-email" placeholder="E-mail" autocomplete="username" style="text-align:left;letter-spacing:normal;font-size:15px;margin-bottom:10px;">
+    <input type="password" class="code-input" id="login-password" placeholder="Mot de passe" autocomplete="current-password" style="text-align:left;letter-spacing:normal;font-size:15px;">
+    <div class="code-error" id="login-error"></div>
+    <button class="who-btn" id="btn-login-submit" style="margin-bottom:0;">Se connecter</button>
   </div>
 </div>
 
@@ -386,7 +377,7 @@ body.privacy-mode .marge-num{
         <span class="header-resultat" id="header-resultat">—</span>
       </div>
       <button class="user-badge" id="btn-privacy-toggle" title="Flouter les chiffres">👁</button>
-      <button class="user-badge" id="user-badge-btn">Connecté : <b id="user-badge-name">—</b> · changer</button>
+      <button class="user-badge" id="user-badge-btn">Connecté : <b id="user-badge-name">—</b> · déconnexion</button>
     </div>
     <div class="sub">Comptabilité, contrats & stocks</div>
     <nav class="tabs">
@@ -807,49 +798,38 @@ const SEED_JOURNAL = [{"date": "2026-05-29", "event": "", "type": "Dépense", "c
 
 let state = { journal: [], ajustements: [], remboursements: [], contrats: [], ingredients: [], produits: [], recette: [], equipements: [], ventes: [] };
 let currentUser = null;
-const ACCESS_CODE = '646464';
+const USER_NAMES = {
+  'jeremy.orlando@icloud.com': 'Quispe',
+  'vin.vin14@hotmail.com': 'Tschanz'
+};
 
 /* ============================================================
-   CODE D'ACCÈS (barrière simple, pas une vraie sécurité serveur)
+   AUTHENTIFICATION FIREBASE (email + mot de passe, session
+   persistée par le SDK Firebase — l'appareil reste connecté)
    ============================================================ */
-async function checkAccessCode(){
+document.getElementById('btn-login-submit').addEventListener('click', submitLogin);
+document.getElementById('login-password').addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitLogin(); });
+async function submitLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if(!email || !pass){ errEl.textContent = 'Merci de renseigner e-mail et mot de passe.'; return; }
   try{
-    return localStorage.getItem('og-code-ok') === 'true'; // personnel, pas partagé
-  }catch(e){ return false; }
-}
-document.getElementById('btn-code-submit').addEventListener('click', submitCode);
-document.getElementById('code-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitCode(); });
-async function submitCode(){
-  const val = document.getElementById('code-input').value.trim();
-  const errEl = document.getElementById('code-error');
-  if(val === ACCESS_CODE){
-    try{ localStorage.setItem('og-code-ok', 'true'); }catch(e){}
-    document.getElementById('code-overlay').classList.add('hidden');
-    startApp();
-  } else {
-    errEl.textContent = 'Code incorrect.';
-    document.getElementById('code-input').value = '';
+    await fbAuthFns.signInWithEmailAndPassword(fbAuth, email, pass);
+    // onAuthStateChanged prend le relais (voir plus bas)
+  }catch(e){
+    errEl.textContent = 'E-mail ou mot de passe incorrect.';
   }
 }
-
-/* ============================================================
-   IDENTITÉ (login simple, mémorisé par appareil — pas de mot de passe)
-   ============================================================ */
-async function loadCurrentUser(){
-  try{
-    return localStorage.getItem('og-current-user'); // personnel, pas partagé
-  }catch(e){ return null; }
-}
-async function setCurrentUser(name){
-  currentUser = name;
-  try{ localStorage.setItem('og-current-user', name); }catch(e){}
-  document.getElementById('user-badge-name').textContent = name;
+function setCurrentUserFromEmail(email){
+  currentUser = USER_NAMES[email] || email;
+  document.getElementById('user-badge-name').textContent = currentUser;
   document.getElementById('login-overlay').classList.add('hidden');
-  // Pré-remplit "Payé par" avec la personne connectée
   const fPayeur = document.getElementById('f-payeur');
   const sPayeur = document.getElementById('s-payeur');
-  if(fPayeur && PAYEURS.includes(name)) fPayeur.value = name;
-  if(sPayeur && PAYEURS.includes(name)) sPayeur.value = name;
+  if(fPayeur && PAYEURS.includes(currentUser)) fPayeur.value = currentUser;
+  if(sPayeur && PAYEURS.includes(currentUser)) sPayeur.value = currentUser;
 }
 
 function animateCounter(el, from, to, duration, baseClass){
@@ -865,15 +845,14 @@ function animateCounter(el, from, to, duration, baseClass){
   }
   requestAnimationFrame(step);
 }
-document.querySelectorAll('.who-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> setCurrentUser(btn.dataset.user));
-});
 document.getElementById('btn-privacy-toggle').addEventListener('click', ()=>{
   document.body.classList.toggle('privacy-mode');
   document.getElementById('btn-privacy-toggle').classList.toggle('active');
 });
-document.getElementById('user-badge-btn').addEventListener('click', ()=>{
-  document.getElementById('login-overlay').classList.remove('hidden');
+document.getElementById('user-badge-btn').addEventListener('click', async ()=>{
+  if(!(await confirmDialog('Se déconnecter de cet appareil ?'))) return;
+  await fbAuthFns.signOut(fbAuth);
+  location.reload();
 });
 
 /* ============================================================
@@ -980,10 +959,11 @@ const firebaseConfig = {
   messagingSenderId: "204547040136",
   appId: "1:204547040136:web:5e22fe1eaaa10284f0d03d"
 };
-let fsDb = null, fsFns = null;
+let fsDb = null, fsFns = null, fbAuth = null, fbAuthFns = null;
 async function initFirebase(){
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
   const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
   const app = initializeApp(firebaseConfig);
   // Force le "long polling" : évite le canal temps réel bloqué par certains
   // bloqueurs de pub / protections anti-tracking de Safari.
@@ -992,6 +972,8 @@ async function initFirebase(){
     useFetchStreams: false
   });
   fsFns = fsMod;
+  fbAuth = authMod.getAuth(app); // persistance locale par défaut (session gardée sur l'appareil)
+  fbAuthFns = authMod;
 }
 
 async function loadAll(){
@@ -2532,15 +2514,18 @@ function renderAll(){
   updateEvenementsList();
 }
 (async function init(){
-  if(await checkAccessCode()){
-    document.getElementById('code-overlay').classList.add('hidden');
-    startApp();
-  }
-  // sinon on attend la saisie du code (voir submitCode)
+  await initFirebase();
+  fbAuthFns.onAuthStateChanged(fbAuth, async (user)=>{
+    if(user){
+      setCurrentUserFromEmail(user.email);
+      await startApp();
+    } else {
+      document.getElementById('login-overlay').classList.remove('hidden');
+    }
+  });
 })();
 
 async function startApp(){
-  await initFirebase();
   await loadAll();
   // Si première utilisation (aucune donnée sauvegardée du tout), on sauvegarde la graine
   const check = await (async ()=>{
@@ -2552,14 +2537,6 @@ async function startApp(){
   })();
   if(!check){ await saveKey('og-journal', state.journal); }
   renderAll();
-
-  // Identité : demande "qui es-tu" si pas encore mémorisé sur cet appareil
-  const savedUser = await loadCurrentUser();
-  if(savedUser){
-    await setCurrentUser(savedUser);
-  } else {
-    document.getElementById('login-overlay').classList.remove('hidden');
-  }
 }
 </script>
 </body>
