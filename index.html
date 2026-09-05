@@ -384,6 +384,7 @@ body.privacy-mode .marge-num{
       <button data-tab="remb">Remboursements</button>
       <button data-tab="contrats">Contrats</button>
       <button data-tab="stocks">Stocks</button>
+      <button data-tab="produits">Produits & recettes</button>
       <button data-tab="export">Export</button>
     </nav>
   </header>
@@ -691,8 +692,11 @@ body.privacy-mode .marge-num{
         <tbody id="equip-body"></tbody></table>
       </div>
       <div class="empty" id="equip-empty" style="display:none;margin-top:10px;">Aucun matériel acquis enregistré.</div>
+    </section>
 
-      <div class="toggle-add" style="margin-top:30px;">
+    <!-- ================= PRODUITS & RECETTES ================= -->
+    <section class="view" id="view-produits">
+      <div class="toggle-add">
         <h2 class="section-title" style="margin:0;"><span>Produits & recettes</span></h2>
         <button class="btn btn-outline" id="btn-open-prod">+ Nouveau produit</button>
       </div>
@@ -1069,6 +1073,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     if(btn.dataset.tab==='export') renderExport();
     if(btn.dataset.tab==='contrats' && !document.getElementById('c-fields').innerHTML) renderContratFields();
     if(btn.dataset.tab==='stocks') renderStocks();
+    if(btn.dataset.tab==='produits'){ renderProduits(); renderCalcInputs(); }
   });
 });
 
@@ -1272,6 +1277,8 @@ document.getElementById('btn-do-vente-import').addEventListener('click', async (
   document.getElementById('vente-import-evenement').value='';
   renderAll();
   renderStocks();
+  renderProduits();
+  renderCalcInputs();
   showToast(`${added} ligne(s) de vente importée(s)${produitsCrees? ', '+produitsCrees+' nouveau(x) produit(s) créé(s)':''}${deduits?', stock déduit':''}${skipped? ', '+skipped+' ligne(s) ignorée(s)':''}.`);
 });
 
@@ -2186,6 +2193,8 @@ document.getElementById('btn-save-prod').addEventListener('click', async ()=>{
   document.getElementById('prod-nom').value='';
   document.getElementById('prod-prix').value='';
   renderStocks();
+  renderProduits();
+  renderCalcInputs();
 });
 
 function renderProduits(){
@@ -2193,7 +2202,7 @@ function renderProduits(){
   document.getElementById('prod-empty').style.display = state.produits.length? 'none':'block';
   wrap.innerHTML = state.produits.map(p=>{
     const lignes = state.recette.filter(r=>r.produitId===p.id);
-    const ingOptions = state.ingredients.map(i=>`<option value="${i.id}">${i.nom} (${i.unite})</option>`).join('');
+    const ingOptions = [...state.ingredients].sort((a,b)=>a.nom.localeCompare(b.nom)).map(i=>`<option value="${i.id}">${i.nom} (${i.unite})</option>`).join('');
     const coutRecette = lignes.reduce((s,l)=>{
       const ing = state.ingredients.find(i=>i.id===l.ingredientId);
       return s + (ing ? (Number(ing.cout)||0) * (Number(l.quantite)||0) : 0);
@@ -2244,6 +2253,8 @@ function renderProduits(){
         state.produits[idx].prixVente = val ? parseFloat(val) : null;
         await saveKey('og-produits', state.produits);
         renderStocks();
+        renderProduits();
+        renderCalcInputs();
       }
     });
   });
@@ -2257,6 +2268,8 @@ function renderProduits(){
       await saveKey('og-produits', state.produits);
       await saveKey('og-recette', state.recette);
       renderStocks();
+      renderProduits();
+      renderCalcInputs();
     });
   });
   wrap.querySelectorAll('[data-recdel]').forEach(btn=>{
@@ -2264,6 +2277,8 @@ function renderProduits(){
       state.recette = state.recette.filter(r=>r.id!==btn.dataset.recdel);
       await saveKey('og-recette', state.recette);
       renderStocks();
+      renderProduits();
+      renderCalcInputs();
     });
   });
   wrap.querySelectorAll('[data-rec-add]').forEach(btn=>{
@@ -2276,6 +2291,8 @@ function renderProduits(){
       state.recette.push(withId({produitId:prodId, ingredientId:sel.value, quantite:qty}));
       await saveKey('og-recette', state.recette);
       renderStocks();
+      renderProduits();
+      renderCalcInputs();
     });
   });
 }
@@ -2354,6 +2371,8 @@ document.getElementById('btn-deduct-stock').addEventListener('click', async ()=>
   document.getElementById('calc-result-card').style.display='none';
   document.getElementById('calc-total-row').style.display='none';
   renderStocks();
+  renderProduits();
+  renderCalcInputs();
   showToast('Stock mis à jour.');
 });
 
@@ -2371,8 +2390,6 @@ function renderStockTotalValue(){
 
 function renderStocks(){
   renderIngredients();
-  renderProduits();
-  renderCalcInputs();
   renderStockTotalValue();
   renderEquipements();
 }
