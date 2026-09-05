@@ -2197,10 +2197,22 @@ document.getElementById('btn-save-prod').addEventListener('click', async ()=>{
   renderCalcInputs();
 });
 
+const PRODUIT_ORDRE = ['classic','original','spicy','royal','salchipapa','frites','frites patates douces'];
+function normNom(s){
+  return (s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function produitOrdreIndex(nom){
+  const i = PRODUIT_ORDRE.indexOf(normNom(nom));
+  return i===-1 ? PRODUIT_ORDRE.length : i;
+}
+function sortProduits(list){
+  return [...list].sort((a,b)=> produitOrdreIndex(a.nom)-produitOrdreIndex(b.nom) || a.nom.localeCompare(b.nom));
+}
+
 function renderProduits(){
   const wrap = document.getElementById('produits-list');
   document.getElementById('prod-empty').style.display = state.produits.length? 'none':'block';
-  wrap.innerHTML = state.produits.map(p=>{
+  wrap.innerHTML = sortProduits(state.produits).map(p=>{
     const lignes = state.recette.filter(r=>r.produitId===p.id);
     const ingOptions = [...state.ingredients].sort((a,b)=>a.nom.localeCompare(b.nom)).map(i=>`<option value="${i.id}">${i.nom} (${i.unite})</option>`).join('');
     const coutRecette = lignes.reduce((s,l)=>{
@@ -2303,7 +2315,7 @@ function renderCalcInputs(){
     wrap.innerHTML = '<div class="empty">Crée d\'abord un produit avec sa recette ci-dessus.</div>';
     return;
   }
-  wrap.innerHTML = '<div class="form-grid">' + state.produits.map(p=>`
+  wrap.innerHTML = '<div class="form-grid">' + sortProduits(state.produits).map(p=>`
     <div class="field"><label>${p.nom} — quantité prévue</label>
     <input type="number" min="0" step="1" id="calcqty-${p.id}" placeholder="0"></div>
   `).join('') + '</div>';
