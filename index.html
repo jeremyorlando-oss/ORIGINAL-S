@@ -637,7 +637,7 @@ body.privacy-mode .marge-num{
           <div class="field"><label>Unité</label>
             <select id="ing-unite"><option>pièce</option><option>g</option><option>kg</option><option>ml</option><option>l</option></select>
           </div>
-          <div class="field"><label>Stock actuel</label><input type="number" step="0.01" id="ing-stock" value="0"></div>
+          <div class="field"><label>Stock actuel</label><input type="number" step="any" id="ing-stock" value="0"></div>
           <div class="field"><label>Coût unitaire (CHF)</label><input type="number" step="0.01" id="ing-cout" placeholder="0.00"></div>
           <div class="field"><label>Seuil d'alerte (optionnel)</label><input type="number" step="0.01" id="ing-seuil"></div>
         </div>
@@ -2228,7 +2228,7 @@ function renderProduits(){
       ${state.ingredients.length ? `
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
         <select data-rec-ing="${p.id}" style="flex:1;min-width:140px;">${ingOptions}</select>
-        <input type="number" step="0.01" data-rec-qty="${p.id}" placeholder="Quantité" style="width:110px;">
+        <input type="number" step="any" data-rec-qty="${p.id}" placeholder="Quantité" style="width:110px;">
         <button class="btn btn-outline" data-rec-add="${p.id}">+ Ajouter</button>
       </div>` : `<div class="scan-status">Ajoute d'abord des ingrédients ci-dessus.</div>`}
     </div>`;
