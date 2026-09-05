@@ -2025,7 +2025,7 @@ document.getElementById('btn-save-ing').addEventListener('click', async ()=>{
 
 function fmtQty(v, unite){
   const n = Number(v)||0;
-  return n.toLocaleString('fr-CH',{maximumFractionDigits:2})+' '+unite;
+  return n.toLocaleString('fr-CH',{maximumFractionDigits:3})+' '+unite;
 }
 
 function renderIngredientsGroup(categorie, tbodyId, emptyId){
